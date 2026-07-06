@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Invoice — Bare Minimum</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='8' fill='%23c49a6c'/%3E%3C/svg%3E">
+  <style>
+    body {
+      background: #f9f9f9;
+      color: #333;
+    }
+    .invoice-wrapper {
+      max-width: 800px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 40px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      border-radius: 8px;
+    }
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid #333;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .invoice-title {
+      font-size: 2rem;
+      margin: 0 0 5px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .invoice-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .meta-col p {
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+    .invoice-table th, .invoice-table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: right;
+    }
+    .invoice-table th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+    .invoice-table th:first-child, .invoice-table td:first-child {
+      text-align: left;
+    }
+    .totals-row td {
+      font-weight: 600;
+    }
+    .print-btn {
+      display: block;
+      width: 150px;
+      margin: 0 auto 40px;
+      text-align: center;
+    }
+    @media print {
+      body { background: #fff; }
+      .invoice-wrapper { box-shadow: none; margin: 0; padding: 0; }
+      .print-btn { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <button class="btn btn-primary print-btn" onclick="window.print()" style="margin-top: 40px;">Print Invoice</button>
+
+  <div class="invoice-wrapper" id="invoice-container">
+    <div style="text-align: center; padding: 40px;">
+      <p>Loading invoice details...</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('id');
+      const container = document.getElementById('invoice-container');
+
+      if (!orderId) {
+        container.innerHTML = `<p style="text-align:center;color:red;">Invalid Invoice ID</p>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/orders/${orderId}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          container.innerHTML = `<p style="text-align:center;color:red;">Invoice not found</p>`;
+          return;
+        }
+
+        const order = data.order;
+        const date = new Date(order.date).toLocaleDateString('en-IN');
+        const invoiceNo = `INV-${orderId.substring(orderId.length - 8).toUpperCase()}`;
+
+        let itemsHtml = '';
+        order.items.forEach((item, index) => {
+          const gstRate = item.gstSlab || 18;
+          const basePrice = item.price / (1 + (gstRate / 100));
+          const taxableValue = basePrice * item.quantity;
+          const cgst = (taxableValue * (gstRate / 2)) / 100;
+          const sgst = cgst;
+          const total = item.price * item.quantity;
+
+          itemsHtml += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${item.name}</td>
+              <td>${item.hsn || '8471'}</td>
+              <td>${item.quantity}</td>
+              <td>₹${basePrice.toFixed(2)}</td>
+              <td>₹${taxableValue.toFixed(2)}</td>
+              <td>${(gstRate / 2)}%<br>₹${cgst.toFixed(2)}</td>
+              <td>${(gstRate / 2)}%<br>₹${sgst.toFixed(2)}</td>
+              <td>₹${total.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+
+        // Totals
+        const totalTaxable = order.items.reduce((sum, item) => sum + ((item.price / (1 + ((item.gstSlab||18) / 100))) * item.quantity), 0);
+        const totalCGST = order.tax / 2;
+        const totalSGST = order.tax / 2;
+
+        container.innerHTML = `
+          <div class="invoice-header">
+            <div>
+              <div class="nav-logo" style="margin-bottom: 10px;">
+                <span class="dot"></span> Bare Minimum
+              </div>
+              <p style="margin:0; font-size: 0.9rem;">123 Indiranagar, 100ft Road</p>
+              <p style="margin:0; font-size: 0.9rem;">Bengaluru, Karnataka 560038</p>
+              <p style="margin:0; font-size: 0.9rem;"><strong>GSTIN:</strong> 29XXXXX1234X1Z5</p>
+              <p style="margin:0; font-size: 0.9rem;"><strong>State Code:</strong> 29 (Karnataka)</p>
+            </div>
+            <div style="text-align: right;">
+              <h1 class="invoice-title">Tax Invoice</h1>
+              <p style="margin:0; font-size: 0.9rem;"><strong>Original for Recipient</strong></p>
+            </div>
+          </div>
+
+          <div class="invoice-meta">
+            <div class="meta-col">
+              <p><strong>Billed To:</strong></p>
+              <p>Customer Name</p>
+              <p>Customer Address, City</p>
+              <p>State Code: XX</p>
+            </div>
+            <div class="meta-col" style="text-align: right;">
+              <p><strong>Invoice No:</strong> ${invoiceNo}</p>
+              <p><strong>Invoice Date:</strong> ${date}</p>
+              <p><strong>Order ID:</strong> ${order.id}</p>
+              <p><strong>Payment Method:</strong> ${order.paymentMethod.toUpperCase()}</p>
+            </div>
+          </div>
+
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Item Description</th>
+                <th>HSN/SAC</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Taxable Value</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr class="totals-row">
+                <td colspan="5" style="text-align: right;"><strong>Total</strong></td>
+                <td>₹${totalTaxable.toFixed(2)}</td>
+                <td>₹${totalCGST.toFixed(2)}</td>
+                <td>₹${totalSGST.toFixed(2)}</td>
+                <td>₹${order.subtotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td colspan="8" style="text-align: right;">Shipping</td>
+                <td>₹${order.shipping.toFixed(2)}</td>
+              </tr>
+              <tr class="totals-row">
+                <td colspan="8" style="text-align: right;"><strong>Grand Total</strong></td>
+                <td><strong>₹${order.amount.toFixed(2)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <div style="margin-top: 40px; font-size: 0.85rem; color: #555;">
+            <p><strong>Declaration:</strong> We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</p>
+            <p style="text-align: right; margin-top: 40px;"><strong>Authorised Signatory</strong></p>
+          </div>
+        `;
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `<p style="text-align:center;color:red;">An error occurred while loading the invoice.</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

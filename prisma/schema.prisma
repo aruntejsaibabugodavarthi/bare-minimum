@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // TODO: Change to "postgresql" for production
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------
+// 1. AUTHENTICATION MODULE
+// -----------------------------------------------------------------
+
+model User {
+  id                   String                 @id @default(uuid())
+  phone                String?                @unique
+  email                String?                @unique
+  name                 String?
+  dateOfBirth          String?
+  passwordHash         String?
+  googleId             String?                @unique
+  role                 String                 @default("user")
+  isVerified           Boolean                @default(false)
+  createdAt            DateTime               @default(now())
+  lastLoginAt          DateTime?
+  deletedAt            DateTime? // For DPDP soft deletes
+  sessions             Session[]
+  orders               Order[]
+  consents             UserConsent[]
+  dataDeletionRequests DataDeletionRequest[]
+  addresses            Address[]
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  address1  String
+  address2  String?
+  city      String
+  state     String
+  pincode   String
+  landmark  String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  refreshTokenHash   String
+  deviceFingerprint  String?
+  ipAddress          String?
+  userAgent          String?
+  expiresAt          DateTime
+  revokedAt          DateTime?
+  createdAt          DateTime  @default(now())
+}
+
+model OtpRequest {
+  id         String    @id @default(uuid())
+  phone      String
+  otpHash    String
+  purpose    String    @default("login") // login, signup, reset
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model LoginAttempt {
+  id          String   @id @default(uuid())
+  phoneOrIp   String
+  success     Boolean
+  createdAt   DateTime @default(now())
+}
+
+// -----------------------------------------------------------------
+// 2. LOGISTICS MODULE
+// -----------------------------------------------------------------
+
+model Pincode {
+  pincode  String                       @id // 6 digits
+  city     String
+  state    String
+  tier     Int // 1, 2, or 3
+  isRemote Boolean                      @default(false)
+  caches   CourierServiceabilityCache[]
+}
+
+model CourierServiceabilityCache {
+  id             String   @id @default(uuid())
+  pincodeId      String
+  pincode        Pincode  @relation(fields: [pincodeId], references: [pincode])
+  courierCode    String
+  isCodAvailable Boolean
+  estimatedDays  Int
+  lastCheckedAt  DateTime @default(now())
+}
+
+model Shipment {
+  id           String    @id @default(uuid())
+  orderId      String    @unique
+  order        Order     @relation(fields: [orderId], references: [id])
+  courierCode  String
+  awbNumber    String?
+  status       String // 'manifested', 'shipped', 'delivered', 'rto'
+  codStatus    String? // 'pending', 'collected', 'remitted', 'reconciled'
+  estimatedMin DateTime?
+  estimatedMax DateTime?
+}
+
+// -----------------------------------------------------------------
+// 3. PAYMENTS & ORDERS MODULE
+// -----------------------------------------------------------------
+
+model Order {
+  id                    String    @id @default(uuid())
+  userId                String?
+  user                  User?     @relation(fields: [userId], references: [id])
+  totalAmount           Int // In smallest unit (paise)
+  paymentMethod         String // 'upi', 'card', 'cod'
+  paymentGatewayOrderId String?
+  paymentId             String? // Razorpay payment ID after verification
+  paymentStatus         String    @default("pending") // 'pending', 'paid', 'failed'
+  metadata              String?   // JSON string containing items, address, contact
+  createdAt             DateTime  @default(now())
+  shipment              Shipment?
+}
+
+// -----------------------------------------------------------------
+// 4. COMPLIANCE (India-specific) MODULE
+// -----------------------------------------------------------------
+
+model UserConsent {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  consentType String // 'marketing', 'data_processing'
+  status      Boolean
+  ipAddress   String?
+  timestamp   DateTime @default(now())
+}
+
+model DataDeletionRequest {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("pending")
+  requestedAt DateTime @default(now())
+}
+
+// -----------------------------------------------------------------
+// 5. CATALOG & INVENTORY MODULE
+// -----------------------------------------------------------------
+
+model Product {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  category       String?
+  price          Int      // In paise
+  gstSlab        Int      // 5, 12, 18, 28
+  inventoryCount Int      @default(0)
+  images         String   @default("[]") // JSON string of image URLs
+  metadata       String?  // JSON string for variants, reviews, etc.
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account — Bare Minimum</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='8' fill='%23c49a6c'/%3E%3C/svg%3E">
+  <style>
+    .account-container { max-width: 1000px; margin: 4rem auto; padding: 0 5%; }
+    .account-header { margin-bottom: 3rem; }
+    .account-header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .order-card { border: 1px solid #eaeaea; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background: #fafafa; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 1rem; margin-bottom: 1rem; }
+    .order-header h3 { font-size: 1.2rem; }
+    .order-meta { font-size: 0.9rem; color: #666; }
+    
+    .status-timeline { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; position: relative; }
+    .status-timeline::before { content: ''; position: absolute; top: 12px; left: 10%; right: 10%; height: 2px; background: #ddd; z-index: 1; }
+    .status-step { position: relative; z-index: 2; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .status-dot { width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
+    .status-step.completed .status-dot { background: var(--charcoal); border-color: var(--charcoal); color: #fff; }
+    .status-step.active .status-dot { border-color: var(--charcoal); box-shadow: 0 0 0 4px rgba(17,17,17,0.1); }
+    .status-label { font-size: 0.8rem; font-weight: 500; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+    .status-step.completed .status-label, .status-step.active .status-label { color: var(--charcoal); }
+
+    .btn-demo-advance { background: #eee; border: 1px solid #ccc; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin-top: 1rem; }
+    .btn-demo-advance:hover { background: #e0e0e0; }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" id="main-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="dot"></span> Bare Minimum
+      </a>
+      <div class="nav-links" id="nav-links">
+        <a href="shop.html">Shop</a>
+        <a href="about.html">About</a>
+        <a href="tracking.html">Track Order</a>
+        <a href="cart.html" class="nav-cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          <span class="cart-badge">0</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="account-container">
+    <div class="account-header">
+      <h1>My Account</h1>
+      <p id="user-greeting" style="color: #666;"></p>
+    </div>
+
+    <h2>Order History</h2>
+    <div id="orders-list" style="margin-top: 2rem;">
+      <p>Loading your orders...</p>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Check if user is logged in
+      const user = auth.getCurrentUser();
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      document.getElementById('user-greeting').textContent = `Welcome back, ${user.name || user.email || user.phone || 'Guest'}.`;
+
+      // 2. Fetch orders
+      try {
+        const session = JSON.parse(localStorage.getItem('bare_minimum_session'));
+        const response = await fetch('http://localhost:8081/api/orders/me', {
+          headers: {
+            'Authorization': \`Bearer \${session.accessToken}\`
+          }
+        });
+        
+        const data = await response.json();
+        const ordersList = document.getElementById('orders-list');
+
+        if (!data.success) {
+          ordersList.innerHTML = \`<p style="color: red;">Failed to load orders: \${data.message}</p>\`;
+          return;
+        }
+
+        if (data.orders.length === 0) {
+          ordersList.innerHTML = '<p>You have not placed any orders yet.</p><a href="shop.html" class="btn" style="display: inline-block; margin-top: 1rem;">Start Shopping</a>';
+          return;
+        }
+
+        ordersList.innerHTML = '';
+        data.orders.forEach(order => {
+          ordersList.innerHTML += renderOrderCard(order);
+        });
+
+      } catch (err) {
+        document.getElementById('orders-list').innerHTML = \`<p style="color: red;">Error connecting to server.</p>\`;
+      }
+    });
+
+    function renderOrderCard(order) {
+      const date = new Date(order.date).toLocaleDateString();
+      const itemsText = order.items.map(i => \`\${i.quantity}x \${i.name}\`).join(', ');
+      
+      const statuses = ['created', 'placed', 'processing', 'shipped', 'delivered'];
+      // Handle missing or invalid status fallback
+      const currentIndex = Math.max(0, statuses.indexOf(order.status));
+      
+      let timelineHTML = '<div class="status-timeline">';
+      ['Placed', 'Processing', 'Shipped', 'Delivered'].forEach((label, idx) => {
+        // 'created' is index 0. 'placed' is 1, mapping to Placed (idx 0).
+        const stepIndex = idx + 1; 
+        const isCompleted = currentIndex >= stepIndex;
+        const isActive = currentIndex === stepIndex;
+        const stateClass = isCompleted ? 'completed' : (isActive ? 'active' : '');
+        
+        let iconHTML = '';
+        if (isCompleted && !isActive) {
+          iconHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        }
+
+        timelineHTML += \`
+          <div class="status-step \${stateClass}">
+            <div class="status-dot">\${iconHTML}</div>
+            <div class="status-label">\${label}</div>
+          </div>
+        \`;
+      });
+      timelineHTML += '</div>';
+
+      return \`
+        <div class="order-card" id="order-\${order.id}">
+          <div class="order-header">
+            <div>
+              <h3>Order #\${order.id}</h3>
+              <div class="order-meta">Placed on \${date} • ₹\${order.amount}</div>
+            </div>
+            <a href="invoice.html?id=\${order.id}" style="color: var(--charcoal); font-weight: 500; font-size: 0.9rem;">View Invoice</a>
+          </div>
+          <div style="font-size: 0.95rem; margin-bottom: 1rem; color: #444;">
+            <strong>Items:</strong> \${itemsText}
+          </div>
+          \${timelineHTML}
+          
+          <!-- DEV ONLY: Advance Status -->
+          <div style="text-align: right; margin-top: 1rem;">
+            <button class="btn-demo-advance" onclick="advanceOrderStatus('\${order.id}')">Demo: Advance Status</button>
+          </div>
+        </div>
+      \`;
+    }
+
+    async function advanceOrderStatus(orderId) {
+      try {
+        const response = await fetch(\`http://localhost:8081/api/orders/demo-advance/\${orderId}\`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert('Failed to advance status');
+        }
+      } catch (e) {
+        alert('Network error');
+      }
+    }
+  </script>
+</body>
+</html>
