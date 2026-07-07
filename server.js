@@ -297,8 +297,35 @@ function estimateDeliveryDate({ pincodeTier, courierCode, isCod }) {
 app.get('/api/logistics/pincode/:pincode', async (req, res) => {
   try {
     const pincode = req.params.pincode;
-    const pInfo = await prisma.pincode.findUnique({ where: { pincode } });
+    let pInfo = await prisma.pincode.findUnique({ where: { pincode } });
     
+    if (!pInfo) {
+      // Fallback: Fetch from Postal Pincode API if not in local DB
+      try {
+        const extRes = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+        const extData = await extRes.json();
+        
+        if (extData && extData[0] && extData[0].Status === 'Success' && extData[0].PostOffice && extData[0].PostOffice.length > 0) {
+          const po = extData[0].PostOffice[0];
+          const city = po.District || po.Block || po.Region || po.Name;
+          const state = po.State;
+          
+          // Insert into local DB for future use
+          pInfo = await prisma.pincode.create({
+            data: {
+              pincode,
+              city,
+              state,
+              tier: 3, // default tier
+              isRemote: false
+            }
+          });
+        }
+      } catch (extErr) {
+        console.error('Error fetching external pincode data:', extErr);
+      }
+    }
+
     if (!pInfo) {
       return res.json({ success: false, message: 'Pincode not found or invalid.' });
     }
