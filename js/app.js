@@ -1415,7 +1415,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (data.success && data.products) {
         PRODUCTS = data.products.map(p => ({
           ...p,
-          ...p.metadata
+          ...p.metadata,
+          id: p.slug
         }));
       }
     }
