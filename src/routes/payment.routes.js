@@ -6,12 +6,13 @@ const prisma = new PrismaClient();
 const { logger } = require('../middleware/error.middleware');
 const { authenticateToken } = require('../middleware/auth.middleware');
 const Razorpay = require('razorpay');
+const config = require('../config');
 
 let razorpay = null;
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+if (config.razorpay.keyId && config.razorpay.keySecret) {
   razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
+    key_id: config.razorpay.keyId,
+    key_secret: config.razorpay.keySecret
   });
 }
 
@@ -19,11 +20,11 @@ router.post('/verify-payment', authenticateToken, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     
-    if (!process.env.RAZORPAY_KEY_SECRET) {
+    if (!config.razorpay.keySecret) {
       return res.status(500).json({ success: false, message: 'Payment gateway not configured' });
     }
 
-    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+    const hmac = crypto.createHmac('sha256', config.razorpay.keySecret);
     hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
     const generated_signature = hmac.digest('hex');
 

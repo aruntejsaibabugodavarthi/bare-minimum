@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const winston = require('winston');
+const config = require('../config');
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: winston.format.simple(),
@@ -16,7 +17,7 @@ function authenticateToken(req, res, next) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const decoded = jwt.verify(token, config.jwt.accessSecret);
     req.user = { id: decoded.userId };
     next();
   } catch (err) {

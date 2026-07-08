@@ -8,16 +8,13 @@ const orderRoutes = require('./routes/order.routes');
 const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const { errorHandler } = require('./middleware/error.middleware');
+const config = require('./config');
 
 const app = express();
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',') 
-  : ['http://localhost:8081'];
-
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || config.allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -28,6 +25,11 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Health Check Endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'UP', timestamp: new Date() });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);

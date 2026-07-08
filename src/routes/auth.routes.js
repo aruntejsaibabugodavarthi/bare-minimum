@@ -9,6 +9,7 @@ const { validate } = require('../middleware/validate.middleware');
 const { z } = require('zod');
 const { sendPasswordResetTokenEmail } = require('../services/email.service');
 const { logger } = require('../middleware/error.middleware');
+const config = require('../config');
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -47,8 +48,8 @@ router.post('/login-password', async (req, res) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '15m' });
-    const refreshTokenStr = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    const accessToken = jwt.sign({ userId: user.id }, config.jwt.accessSecret, { expiresIn: '15m' });
+    const refreshTokenStr = jwt.sign({ userId: user.id }, config.jwt.refreshSecret, { expiresIn: '7d' });
     
     await prisma.refreshToken.create({
       data: { tokenHash: await bcrypt.hash(refreshTokenStr, 10), userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
