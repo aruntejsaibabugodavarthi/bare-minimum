@@ -11,13 +11,13 @@ function initProductPage() {
   const product = PRODUCTS.find(p => p.id === productId);
 
   if (!product) {
-    container.innerHTML = DOMPurify.sanitize(`
+    container.innerHTML = `
       <div class="container text-center" style="padding: 6rem 0;">
         <h2>Product not found</h2>
         <p style="margin: 1rem 0 2rem;">The product you're looking for doesn't exist.</p>
         <a href="shop.html" class="btn btn-primary">Browse Shop</a>
       </div>
-    `);
+    `;
     return;
   }
 
@@ -32,7 +32,7 @@ function initProductPage() {
   let quantity = 1;
 
   function renderProduct() {
-    container.innerHTML = DOMPurify.sanitize(`
+    container.innerHTML = `
       <div class="container">
         <div class="product-detail-grid">
           <div class="product-gallery">
@@ -215,13 +215,13 @@ function initProductPage() {
           <div class="product-grid" id="related-grid"></div>
         </div>
       </div>
-    `);
+    `;
 
     // Render related products
     const related = PRODUCTS.filter(p => p.id !== product.id).slice(0, 4);
     const relatedGrid = document.getElementById('related-grid');
     if (relatedGrid) {
-      relatedGrid.innerHTML = DOMPurify.sanitize(related.map(p => `
+      relatedGrid.innerHTML = related.map(p => `
         <a href="product.html?id=${p.id}" class="product-card">
           <div class="product-card-image">
             ${p.isNew ? '<span class="badge-new">New</span>' : ''}
@@ -236,7 +236,7 @@ function initProductPage() {
             <div class="product-card-price">₹${p.price}</div>
           </div>
         </a>
-      `).join(''));
+      `).join('');
     }
 
 document.addEventListener('DOMContentLoaded', () => {

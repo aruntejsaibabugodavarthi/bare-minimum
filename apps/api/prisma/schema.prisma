@@ -30,6 +30,9 @@ model User {
   dataDeletionRequests DataDeletionRequest[]
   addresses            Address[]
   passwordResetTokens  PasswordResetToken[]
+  reviews              Review[]
+
+  @@index([email])
 }
 
 model Address {
@@ -45,6 +48,9 @@ model Address {
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@index([userId])
 }
 
 model Session {
@@ -130,14 +136,32 @@ model Order {
   id                    String    @id @default(uuid())
   userId                String?
   user                  User?     @relation(fields: [userId], references: [id])
+  addressId             String?
+  address               Address?  @relation(fields: [addressId], references: [id])
   totalAmount           Int // In smallest unit (paise)
   paymentMethod         String // 'upi', 'card', 'cod'
   paymentGatewayOrderId String?
   paymentId             String? // Razorpay payment ID after verification
   paymentStatus         String    @default("pending") // 'pending', 'paid', 'failed'
+  status                String    @default("PENDING")
+  logisticsProvider     String?
+  trackingNumber        String?
   metadata              String? // JSON string containing items, address, contact
   createdAt             DateTime  @default(now())
   shipment              Shipment?
+  items                 OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
 }
 
 // -----------------------------------------------------------------
@@ -174,12 +198,28 @@ model Product {
   category       String?
   price          Int // In paise
   gstSlab        Int // 5, 12, 18, 28
-  inventoryCount Int      @default(0)
+  stock          Int      @default(0)
   images         String   @default("[]") // JSON string of image URLs
   metadata       String? // JSON string for variants, reviews, etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  orderItems     OrderItem[]
+  reviews        Review[]
 
   @@index([slug])
   @@index([category])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([userId])
 }

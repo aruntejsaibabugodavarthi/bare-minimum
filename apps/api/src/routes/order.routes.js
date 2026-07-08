@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 const { logger } = require('../middleware/error.middleware');
 const { authenticateToken } = require('../middleware/auth.middleware');
 const { z } = require('zod');
@@ -27,10 +26,17 @@ router.post('/', authenticateToken, validate(createOrderSchema), async (req, res
     const address = await prisma.address.findUnique({ where: { id: addressId, userId: req.user.id } });
     if (!address) return res.status(400).json({ success: false, message: 'Invalid address' });
 
+    // Batch fetch products
+    const productIds = items.map(item => item.productId);
+    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+    
+    const productMap = new Map(products.map(p => [p.id, p]));
+
     let totalAmount = 0;
     const orderItemsData = [];
+    
     for (const item of items) {
-      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      const product = productMap.get(item.productId);
       if (!product || product.stock < item.quantity) {
         return res.status(400).json({ success: false, message: `Product ${item.productId} is out of stock or not found` });
       }
@@ -50,25 +56,27 @@ router.post('/', authenticateToken, validate(createOrderSchema), async (req, res
       logisticsProvider = serviceability.courierCode;
     }
 
-    const order = await prisma.order.create({
-      data: {
-        userId: req.user.id,
-        addressId,
-        totalAmount,
-        status,
-        paymentMethod,
-        logisticsProvider,
-        items: { create: orderItemsData }
-      },
-      include: { items: true }
-    });
-
-    for (const item of items) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } }
-      });
-    }
+    // Execute in transaction
+    const [order] = await prisma.$transaction([
+      prisma.order.create({
+        data: {
+          userId: req.user.id,
+          addressId,
+          totalAmount,
+          status,
+          paymentMethod,
+          logisticsProvider,
+          items: { create: orderItemsData }
+        },
+        include: { items: true }
+      }),
+      ...items.map(item => 
+        prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } }
+        })
+      )
+    ]);
 
     res.json({ success: true, order });
   } catch (error) {

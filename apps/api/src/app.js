@@ -4,19 +4,20 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+const config = require('./config');
+
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
 const orderRoutes = require('./routes/order.routes');
 const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const { errorHandler } = require('./middleware/error.middleware');
-const config = require('./config');
 const compression = require('compression');
 
 const app = express();
 
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabling CSP for now to allow local dev assets
+  contentSecurityPolicy: config.env === 'production' ? undefined : false,
 }));
 app.use(compression());
 
@@ -29,13 +30,7 @@ const globalLimiter = rateLimit({
 app.use('/api/', globalLimiter);
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || config.allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true,
   credentials: true
 }));
 

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -50,7 +49,6 @@ const loginSchema = z.object({
 router.post('/login-password', authLimiter, validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.passwordHash) {
@@ -81,7 +79,6 @@ const forgotPasswordSchema = z.object({
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: 'Email required' });
     
     const user = await prisma.user.findUnique({ where: { email } });
     if (user) {
@@ -113,22 +110,24 @@ const resetPasswordSchema = z.object({
 router.post('/reset-password', authLimiter, validate(resetPasswordSchema), async (req, res) => {
   try {
     const { token, newPassword, email } = req.body;
-    if (!token || !newPassword || !email) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-    const user = await prisma.user.findUnique({ where: { email }, include: { passwordResetTokens: true } });
+    const user = await prisma.user.findUnique({ 
+      where: { email }, 
+      include: { 
+        passwordResetTokens: {
+          where: { expiresAt: { gt: new Date() } }
+        } 
+      } 
+    });
     if (!user) return res.status(400).json({ success: false, message: 'Invalid request' });
     
     const now = new Date();
     let validTokenId = null;
 
     for (const resetToken of user.passwordResetTokens) {
-      if (resetToken.expiresAt > now) {
-        const isValid = await bcrypt.compare(token, resetToken.tokenHash);
-        if (isValid) {
+      const isValid = await bcrypt.compare(token, resetToken.tokenHash);
+      if (isValid) {
           validTokenId = resetToken.id;
-          break;
-        }
+        break;
       }
     }
 

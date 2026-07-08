@@ -624,9 +624,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ...p,
         // The API returns 'images' as a parsed JSON array, and 'slug' as 'id' for the frontend
         id: p.slug,
-        image: p.images[0],
+        image: typeof p.images === 'string' ? JSON.parse(p.images)[0] : (p.images && p.images[0]),
         variants: [ // Quick mock of variants since we don't have them in the new schema yet
-          { id: p.slug + '-v1', size: 'Standard', color: 'Standard', stock: p.inventoryCount }
+          { id: p.slug + '-v1', size: 'Standard', color: 'Standard', stock: p.stock }
         ],
         isNew: true,
         isFeatured: true,
@@ -638,6 +638,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (error) {
     console.error('Error fetching products:', error);
   }
+
+  window.PRODUCTS_LOADED = true;
+  document.dispatchEvent(new Event('productsLoaded'));
 
   initAuth();
   initNavigation();

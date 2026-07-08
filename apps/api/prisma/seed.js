@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../src/utils/prisma');
 
 const PRODUCTS = [
   {
@@ -8,7 +7,7 @@ const PRODUCTS = [
     description: 'Keep your drinks cold for 24 hours or hot for 12. Matte finish.',
     price: 3040,
     gstSlab: 18,
-    inventoryCount: 150,
+    stock: 150,
     images: JSON.stringify(['/assets/images/tumbler.png'])
   },
   {
@@ -17,7 +16,7 @@ const PRODUCTS = [
     description: 'Durable everyday carry. Reinforced stitching and inner pocket.',
     price: 4400,
     gstSlab: 12,
-    inventoryCount: 200,
+    stock: 200,
     images: JSON.stringify(['/assets/images/tote.png'])
   },
   {
@@ -26,7 +25,7 @@ const PRODUCTS = [
     description: '160 pages of 120gsm dot-grid paper. Lies perfectly flat.',
     price: 2560,
     gstSlab: 12,
-    inventoryCount: 300,
+    stock: 300,
     images: JSON.stringify(['/assets/images/notebook.png'])
   },
   {
@@ -35,7 +34,7 @@ const PRODUCTS = [
     description: 'Premium organic cotton. Relaxed fit.',
     price: 6800,
     gstSlab: 5,
-    inventoryCount: 50,
+    stock: 50,
     images: JSON.stringify(['/assets/images/hoodie.png'])
   },
   {
@@ -44,7 +43,7 @@ const PRODUCTS = [
     description: 'Our core collection: Tumbler, Notebook, and Tote.',
     price: 9200,
     gstSlab: 18,
-    inventoryCount: 40,
+    stock: 40,
     images: JSON.stringify(['/assets/images/set.png'])
   },
   {
@@ -53,7 +52,7 @@ const PRODUCTS = [
     description: 'Sustainable and stylish table protection.',
     price: 2240,
     gstSlab: 18,
-    inventoryCount: 100,
+    stock: 100,
     images: JSON.stringify(['/assets/images/coasters.png'])
   },
   {
@@ -62,7 +61,7 @@ const PRODUCTS = [
     description: 'Unique glaze. Dishwasher safe.',
     price: 2560,
     gstSlab: 18,
-    inventoryCount: 80,
+    stock: 80,
     images: JSON.stringify(['/assets/images/mug.png'])
   },
   {
@@ -71,7 +70,7 @@ const PRODUCTS = [
     description: '40 hour burn time. Hand-poured.',
     price: 3360,
     gstSlab: 18,
-    inventoryCount: 120,
+    stock: 120,
     images: JSON.stringify(['/assets/images/candle.png'])
   }
 ];

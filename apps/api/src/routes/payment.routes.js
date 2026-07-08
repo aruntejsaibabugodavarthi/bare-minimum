@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 const { logger } = require('../middleware/error.middleware');
 const { authenticateToken } = require('../middleware/auth.middleware');
 const Razorpay = require('razorpay');

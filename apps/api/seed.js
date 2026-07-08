@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('./src/utils/prisma');
 
 const PRODUCTS = [
   {
@@ -236,7 +235,7 @@ async function seed() {
         price,
         gstSlab,
         description,
-        inventoryCount: totalStock,
+        stock: totalStock,
         images: JSON.stringify(images),
         metadata: JSON.stringify(metadata)
       },
@@ -247,7 +246,7 @@ async function seed() {
         price,
         gstSlab,
         description,
-        inventoryCount: totalStock,
+        stock: totalStock,
         images: JSON.stringify(images),
         metadata: JSON.stringify(metadata)
       }

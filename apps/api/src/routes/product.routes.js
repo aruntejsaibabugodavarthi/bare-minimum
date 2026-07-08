@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 const { logger } = require('../middleware/error.middleware');
 const { authenticateToken } = require('../middleware/auth.middleware');
 const { z } = require('zod');
@@ -9,8 +8,28 @@ const { validate } = require('../middleware/validate.middleware');
 
 router.get('/', async (req, res) => {
   try {
-    const products = await prisma.product.findMany();
-    res.json({ success: true, products });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const products = await prisma.product.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    const total = await prisma.product.count();
+
+    res.json({ 
+      success: true, 
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     logger.error('Error fetching products:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -32,11 +51,30 @@ router.get('/:id', async (req, res) => {
 
 router.get('/:id/reviews', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const reviews = await prisma.review.findMany({
       where: { productId: req.params.id },
-      include: { user: { select: { name: true } } }
+      include: { user: { select: { name: true } } },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' }
     });
-    res.json({ success: true, reviews });
+    
+    const total = await prisma.review.count({ where: { productId: req.params.id } });
+
+    res.json({ 
+      success: true, 
+      reviews,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     logger.error('Error fetching reviews:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -51,9 +89,6 @@ const reviewSchema = z.object({
 router.post('/:id/reviews', authenticateToken, validate(reviewSchema), async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
-    }
     
     // Check if user has purchased the product
     const orderItems = await prisma.orderItem.findMany({

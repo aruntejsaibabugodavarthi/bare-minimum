@@ -54,7 +54,7 @@ function initShopPage() {
       countEl.textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
     }
 
-    grid.innerHTML = DOMPurify.sanitize(filtered.map(product => `
+    grid.innerHTML = filtered.map(product => `
       <a href="product.html?id=${product.id}" class="product-card reveal visible" id="product-${product.id}">
         <div class="product-card-image">
           ${product.isNew ? '<span class="badge-new">New</span>' : ''}
@@ -70,7 +70,7 @@ function initShopPage() {
           <div class="product-card-price">₹${product.price}</div>
         </div>
       </a>
-    `).join(''));
+    `).join('');
   }
 
   // Filter checkboxes (Color & Size)
@@ -125,3 +125,12 @@ function initShopPage() {
   renderProducts();
 }
 
+function runInit() {
+  if (window.PRODUCTS_LOADED) {
+    initShopPage();
+  } else {
+    document.addEventListener('productsLoaded', initShopPage);
+  }
+}
+
+runInit();

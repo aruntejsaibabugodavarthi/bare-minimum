@@ -1,7 +1,6 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../src/utils/prisma');
 
 // Use a separate test database or mock in a real scenario, but for now we'll just test the endpoints.
 // Since we don't want to pollute dev.db heavily, we'll just test validation errors.
