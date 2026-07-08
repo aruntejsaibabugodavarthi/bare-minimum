@@ -10,6 +10,13 @@ const { z } = require('zod');
 const { sendPasswordResetTokenEmail } = require('../services/email.service');
 const { logger } = require('../middleware/error.middleware');
 const config = require('../config');
+const rateLimit = require('express-rate-limit');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs for auth routes
+  message: 'Too many authentication attempts from this IP, please try again after 15 minutes'
+});
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -17,7 +24,7 @@ const registerSchema = z.object({
   name: z.string().min(2).optional()
 });
 
-router.post('/register', validate(registerSchema), async (req, res) => {
+router.post('/register', authLimiter, validate(registerSchema), async (req, res) => {
   try {
     const { email, password, name } = req.body;
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -35,7 +42,12 @@ router.post('/register', validate(registerSchema), async (req, res) => {
   }
 });
 
-router.post('/login-password', async (req, res) => {
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
+
+router.post('/login-password', authLimiter, validate(loginSchema), async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
@@ -62,7 +74,11 @@ router.post('/login-password', async (req, res) => {
   }
 });
 
-router.post('/forgot-password', async (req, res) => {
+const forgotPasswordSchema = z.object({
+  email: z.string().email()
+});
+
+router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: 'Email required' });
@@ -88,7 +104,13 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-router.post('/reset-password', async (req, res) => {
+const resetPasswordSchema = z.object({
+  token: z.string(),
+  newPassword: z.string().min(6),
+  email: z.string().email()
+});
+
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), async (req, res) => {
   try {
     const { token, newPassword, email } = req.body;
     if (!token || !newPassword || !email) {

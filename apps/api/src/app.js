@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/auth.routes');
 const productRoutes = require('./routes/product.routes');
@@ -13,7 +15,18 @@ const compression = require('compression');
 
 const app = express();
 
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabling CSP for now to allow local dev assets
+}));
 app.use(compression());
+
+// Global Rate Limiter
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', globalLimiter);
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -29,7 +42,7 @@ app.use(cors({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const staticDir = config.env === 'production' ? '../dist' : '../public';
+const staticDir = config.env === 'production' ? '../../old-web/dist' : '../../old-web/public';
 app.use(express.static(path.join(__dirname, staticDir), {
   etag: true,
   lastModified: true,

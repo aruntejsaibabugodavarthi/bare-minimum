@@ -4,6 +4,8 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { logger } = require('../middleware/error.middleware');
 const { authenticateToken } = require('../middleware/auth.middleware');
+const { z } = require('zod');
+const { validate } = require('../middleware/validate.middleware');
 
 router.get('/', async (req, res) => {
   try {
@@ -41,7 +43,12 @@ router.get('/:id/reviews', async (req, res) => {
   }
 });
 
-router.post('/:id/reviews', authenticateToken, async (req, res) => {
+const reviewSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().optional()
+});
+
+router.post('/:id/reviews', authenticateToken, validate(reviewSchema), async (req, res) => {
   try {
     const { rating, comment } = req.body;
     if (!rating || rating < 1 || rating > 5) {

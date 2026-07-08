@@ -4,9 +4,20 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { logger } = require('../middleware/error.middleware');
 const { authenticateToken } = require('../middleware/auth.middleware');
+const { z } = require('zod');
+const { validate } = require('../middleware/validate.middleware');
 const { estimateDeliveryDate, logisticsEngine } = require('../services/logistics.service');
 
-router.post('/', authenticateToken, async (req, res) => {
+const createOrderSchema = z.object({
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive()
+  })).min(1),
+  addressId: z.string(),
+  paymentMethod: z.enum(['UPI', 'CARD', 'COD'])
+});
+
+router.post('/', authenticateToken, validate(createOrderSchema), async (req, res) => {
   try {
     const { items, addressId, paymentMethod } = req.body;
     if (!items || items.length === 0 || !addressId || !paymentMethod) {

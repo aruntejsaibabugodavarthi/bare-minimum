@@ -1,0 +1,11 @@
+{
+  "name": "bare-minimum-old-web",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && cp public/sw.js dist/"
+  },
+  "devDependencies": {
+    "vite": "8.1.3"
+  }
+}
