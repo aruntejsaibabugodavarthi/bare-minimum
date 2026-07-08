@@ -12,16 +12,16 @@ datasource db {
 // -----------------------------------------------------------------
 
 model User {
-  id                   String                 @id @default(uuid())
-  phone                String?                @unique
-  email                String?                @unique
+  id                   String                @id @default(uuid())
+  phone                String?               @unique
+  email                String?               @unique
   name                 String?
   dateOfBirth          String?
   passwordHash         String?
-  googleId             String?                @unique
-  role                 String                 @default("user")
-  isVerified           Boolean                @default(false)
-  createdAt            DateTime               @default(now())
+  googleId             String?               @unique
+  role                 String                @default("user")
+  isVerified           Boolean               @default(false)
+  createdAt            DateTime              @default(now())
   lastLoginAt          DateTime?
   deletedAt            DateTime? // For DPDP soft deletes
   sessions             Session[]
@@ -29,6 +29,7 @@ model User {
   consents             UserConsent[]
   dataDeletionRequests DataDeletionRequest[]
   addresses            Address[]
+  passwordResetTokens  PasswordResetToken[]
 }
 
 model Address {
@@ -47,16 +48,16 @@ model Address {
 }
 
 model Session {
-  id                 String    @id @default(uuid())
-  userId             String
-  user               User      @relation(fields: [userId], references: [id])
-  refreshTokenHash   String
-  deviceFingerprint  String?
-  ipAddress          String?
-  userAgent          String?
-  expiresAt          DateTime
-  revokedAt          DateTime?
-  createdAt          DateTime  @default(now())
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id])
+  refreshTokenHash  String
+  deviceFingerprint String?
+  ipAddress         String?
+  userAgent         String?
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  createdAt         DateTime  @default(now())
 }
 
 model OtpRequest {
@@ -71,10 +72,19 @@ model OtpRequest {
 }
 
 model LoginAttempt {
-  id          String   @id @default(uuid())
-  phoneOrIp   String
-  success     Boolean
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  phoneOrIp String
+  success   Boolean
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  tokenHash String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 // -----------------------------------------------------------------
@@ -125,7 +135,7 @@ model Order {
   paymentGatewayOrderId String?
   paymentId             String? // Razorpay payment ID after verification
   paymentStatus         String    @default("pending") // 'pending', 'paid', 'failed'
-  metadata              String?   // JSON string containing items, address, contact
+  metadata              String? // JSON string containing items, address, contact
   createdAt             DateTime  @default(now())
   shipment              Shipment?
 }
@@ -162,11 +172,11 @@ model Product {
   name           String
   description    String?
   category       String?
-  price          Int      // In paise
-  gstSlab        Int      // 5, 12, 18, 28
+  price          Int // In paise
+  gstSlab        Int // 5, 12, 18, 28
   inventoryCount Int      @default(0)
   images         String   @default("[]") // JSON string of image URLs
-  metadata       String?  // JSON string for variants, reviews, etc.
+  metadata       String? // JSON string for variants, reviews, etc.
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
