@@ -27,13 +27,13 @@ jobs:
       run: npm ci
       
     - name: Generate Prisma Client
-      run: npx prisma generate
+      run: npx prisma generate --schema=apps/api/prisma/schema.prisma
       
     - name: Run Linter
-      run: npm run lint --if-present
+      run: npm run lint --workspaces --if-present
       
     - name: Run Tests
-      run: npm test
+      run: npm test --workspaces --if-present
       env:
         JWT_ACCESS_SECRET: test_secret
         JWT_REFRESH_SECRET: test_secret_refresh
