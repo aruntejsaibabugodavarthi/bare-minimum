@@ -24,7 +24,7 @@ function initCheckoutPage() {
           return `
             <div style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
               <div style="position: relative;">
-                <img src="${product.image}" alt="${product.name}" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                <img src="${product.image}" alt="${product.name}" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;" loading="lazy">
                 <span style="position: absolute; top: -8px; right: -8px; background: #666; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem;">${item.quantity}</span>
               </div>
               <div style="flex: 1;">

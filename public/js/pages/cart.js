@@ -44,7 +44,7 @@ function initCartPage() {
               <div class="cart-item" data-index="${index}">
                 <div class="cart-item-info">
                   <div class="cart-item-image">
-                    <img src="${product.image}" alt="${product.name}">
+                    <img src="${product.image}" alt="${product.name}" loading="lazy">
                   </div>
                   <div>
                     <div class="cart-item-name">${product.name}</div>

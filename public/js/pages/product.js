@@ -40,7 +40,7 @@ function initProductPage() {
             ${product.images.length > 1 ? `
             <div class="product-gallery-thumbnails" style="display: flex; gap: 10px; margin-top: 10px;">
               ${product.images.map((img, idx) => `
-                <img src="${img}" class="gallery-thumb ${idx === 0 ? 'active' : ''}" data-src="${img}" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid ${idx === 0 ? '#333' : 'transparent'}; border-radius: 4px; transition: border-color 0.2s;">
+                <img src="${img}" class="gallery-thumb ${idx === 0 ? 'active' : ''}" data-src="${img}" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid ${idx === 0 ? '#333' : 'transparent'}; border-radius: 4px; transition: border-color 0.2s;" loading="lazy">
               `).join('')}
             </div>
             ` : ''}

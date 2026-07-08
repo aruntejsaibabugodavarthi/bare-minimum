@@ -203,7 +203,7 @@ function initSearch() {
     if (matched.length > 0) {
       searchResults.innerHTML = DOMPurify.sanitize(matched.map(p => `
         <a href="product.html?id=${p.id}" class="search-result-item">
-          <img src="${p.image}" alt="${p.name}">
+          <img src="${p.image}" alt="${p.name}" loading="lazy">
           <div class="search-result-info">
             <div class="search-result-name">${p.name}</div>
             <div class="search-result-price">₹${p.price}</div>
