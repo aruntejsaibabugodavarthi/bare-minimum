@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Shop premium minimalist essentials from Bare Minimum.">
-  <title>Product — Bare Minimum</title>
+  <meta name="description" content="Your shopping cart — Bare Minimum">
+  <title>Cart — Bare Minimum</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='8' fill='%23c49a6c'/%3E%3C/svg%3E">
+  <script type="module" crossorigin src="/assets/cart-WyBC8NJx.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/common-BBPTEEuR.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-DWs-L9PZ.css">
 </head>
 <body>
 
@@ -40,9 +42,14 @@
     </div>
   </nav>
 
-  <!-- Product Detail (rendered by JS) -->
-  <section class="product-detail" id="product-detail">
-    <!-- Content populated by JavaScript -->
+  <!-- Cart Page -->
+  <section class="cart-page">
+    <div class="container">
+      <h1 style="margin-bottom: 2rem;">Your Cart</h1>
+      <div id="cart-content">
+        <!-- Cart content rendered by JS -->
+      </div>
+    </div>
   </section>
 
   <!-- Footer -->
@@ -117,8 +124,6 @@
   <!-- Login Modal -->
 
 
-  <script type="module" src="js/common.js"></script>
-  <script type="module" src="js/pages/product.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 </body>
 </html>

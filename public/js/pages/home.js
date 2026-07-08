@@ -1,3 +1,5 @@
+import { PRODUCTS, auth, showToast } from '../common.js';
+
 // ========== FEATURED PRODUCTS (HOMEPAGE) ==========
 
 function initFeaturedProducts() {
@@ -20,7 +22,12 @@ function initFeaturedProducts() {
         <div class="product-card-name">${product.name}</div>
         <div class="product-card-price">₹${product.price}</div>
       </div>
+      </div>
     </a>
-  `).join('');
+  `).join(''));
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  // Wait slightly to ensure common.js fetched products
+  setTimeout(initFeaturedProducts, 100);
+});

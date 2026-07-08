@@ -1,3 +1,5 @@
+import { PRODUCTS, cart, showToast } from '../common.js';
+
 // ========== CART PAGE ==========
 
 function initCartPage() {
@@ -37,7 +39,7 @@ function initCartPage() {
             <span></span>
           </div>
           ${cart.items.map((item, index) => {
-            const product = PRODUCTS.find(p => p.id === item.productId));
+            const product = PRODUCTS.find(p => p.id === item.productId);
             if (!product) return '';
             const itemTotal = product.price * item.quantity;
             return `
@@ -110,7 +112,18 @@ function initCartPage() {
           </div>
         </div>
       </div>
-    `;
+    `);
+
+    // Handle manual quantity input changes
+    document.querySelectorAll('.qty-input').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        let qty = parseInt(e.target.value);
+        if (isNaN(qty) || qty < 1) qty = 1;
+        cart.updateQuantity(index, qty);
+        renderCart();
+      });
+    });
   }
 
   // Global functions for inline handlers

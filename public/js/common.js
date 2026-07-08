@@ -2,7 +2,7 @@
 
 // ========== PRODUCT DATA ==========
 
-let PRODUCTS = [];
+export let PRODUCTS = [];
 
 
 // ========== CART MANAGEMENT ==========
@@ -85,12 +85,11 @@ class Cart {
 }
 
 // Global cart instance
-const cart = new Cart();
-
+export const cart = new Cart();
 
 // ========== TOAST NOTIFICATION ==========
 
-function showToast(message) {
+export function showToast(message) {
   // Remove existing toast
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
@@ -266,7 +265,7 @@ function initNewsletter() {
 
 // ========== AUTHENTICATION ==========
 
-class Auth {
+export class Auth {
   constructor() {
     this.token = localStorage.getItem('bm_access_token');
     this.refreshToken = localStorage.getItem('bm_refresh_token');
@@ -342,7 +341,7 @@ class Auth {
   }
 }
 
-const auth = new Auth();
+export const auth = new Auth();
 
 function initAuth() {
   // 1. Setup Navigation Auth State
@@ -365,8 +364,8 @@ function initAuth() {
             </svg>
           </span>
         </a>
-        <a href="#" onclick="event.preventDefault()); auth.logout();" class="auth-link">Logout</a>
-      `;
+        <a href="#" onclick="event.preventDefault(); auth.logout();" class="auth-link">Logout</a>
+      `);
     } else {
       authContainer.innerHTML = DOMPurify.sanitize(`
         <a href="login.html" class="auth-link">Login</a>
@@ -583,7 +582,7 @@ class ConsentManager {
           <button id="btn-accept-consent" class="btn btn-primary btn-sm" style="background: var(--copper); border-color: var(--copper); padding: 0.5rem 1.5rem;">Accept All</button>
         </div>
       </div>
-    `;
+    `);
 
     // Add animation style
     const style = document.createElement('style');
@@ -643,11 +642,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuth();
   initNavigation();
   initSearch();
-  initFeaturedProducts();
-  initShopPage();
-  initProductPage();
-  initCartPage();
-  initCheckoutPage();
   initSupportWidget();
   initNewsletter();
   initScrollReveal();

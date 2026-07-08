@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Bare Minimum — Curated essentials for modern, intentional living. Premium minimalist products designed with purpose.">
-  <title>Bare Minimum — Curated Essentials</title>
+  <meta name="description" content="Shop Bare Minimum's curated collection of premium minimalist essentials. Tumblers, totes, notebooks, candles, and more.">
+  <title>Shop — Bare Minimum</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-  <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='8' fill='%23c49a6c'/%3E%3C/svg%3E">
+  <script type="module" crossorigin src="/assets/shop-WyBC8NJx.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/common-BBPTEEuR.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-DWs-L9PZ.css">
 </head>
 <body>
 
@@ -40,96 +42,91 @@
     </div>
   </nav>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-bg">
-      <img src="assets/images/hero.png" alt="Bare Minimum lifestyle essentials">
-    </div>
-    <div class="hero-overlay"></div>
-    <div class="hero-content container">
-      <div class="hero-eyebrow">Curated Essentials</div>
-      <h1>Less, But<br>Better.</h1>
-      <p>Mindfully designed products for modern, intentional living. Every piece earns its place.</p>
-      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-        <a href="shop.html" class="btn btn-primary">Shop the Collection</a>
-        <a href="about.html" class="btn btn-outline-light">Our Story</a>
-      </div>
+  <!-- Page Hero -->
+  <section class="page-hero">
+    <div class="container">
+      <h1>Shop All</h1>
+      <p>Curated essentials for intentional living</p>
     </div>
   </section>
 
-  <!-- Featured Products -->
-  <section class="products-section section">
+  <!-- Shop Content -->
+  <section class="section">
     <div class="container">
-      <div class="section-header reveal">
-        <h2>Featured Essentials</h2>
-        <div class="divider"></div>
-        <p>Our most loved pieces — each one designed with intention and crafted to last.</p>
-      </div>
-      <div class="product-grid" id="featured-grid">
-        <!-- Products rendered by JS -->
-      </div>
-      <div class="text-center" style="margin-top: 3rem;">
-        <a href="shop.html" class="btn btn-secondary reveal">View All Products</a>
-      </div>
-    </div>
-  </section>
+      <div class="shop-layout">
+        <!-- Filters -->
+        <aside class="shop-filters">
+          <div class="filter-group">
+            <h5>Category</h5>
+            <button class="filter-btn active" data-filter="category" data-value="All">All Products</button>
+            <button class="filter-btn" data-filter="category" data-value="Drinkware">Drinkware</button>
+            <button class="filter-btn" data-filter="category" data-value="Bags">Bags</button>
+            <button class="filter-btn" data-filter="category" data-value="Apparel">Apparel</button>
+            <button class="filter-btn" data-filter="category" data-value="Stationery">Stationery</button>
+            <button class="filter-btn" data-filter="category" data-value="Home">Home</button>
+            <button class="filter-btn" data-filter="category" data-value="Bundles">Bundles</button>
+          </div>
+          
+          <div class="filter-group" style="margin-top: 2rem;">
+            <h5>Color</h5>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="color" value="Charcoal"> Charcoal
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="color" value="Cream"> Cream
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="color" value="Black"> Black
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="color" value="Grey"> Grey
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="color" value="Natural"> Natural
+            </label>
+          </div>
 
-  <!-- Brand Story -->
-  <section class="story-section section">
-    <div class="container">
-      <div class="story-grid">
-        <div class="story-content reveal">
-          <div class="eyebrow">Our Philosophy</div>
-          <h2>Designed for<br>Intentional Living</h2>
-          <p>In a world of excess, we believe in the power of restraint. Every Bare Minimum product is a distillation — stripped of the unnecessary, refined to its essence.</p>
-          <p>We work with artisans who share our obsession with detail, using materials that age beautifully: Portuguese cork, Belgian linen, Japanese stoneware, and organic cotton.</p>
-          <a href="about.html" class="btn btn-secondary" style="margin-top: 0.5rem;">Read Our Story</a>
-        </div>
-        <div class="story-image reveal reveal-delay-2">
-          <img src="assets/images/brand-story.png" alt="Bare Minimum careful packaging process" loading="lazy">
-        </div>
-      </div>
-    </div>
-  </section>
+          <div class="filter-group" style="margin-top: 2rem;">
+            <h5>Size</h5>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="size" value="S"> Small
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="size" value="M"> Medium
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="size" value="L"> Large
+            </label>
+            <label class="filter-toggle" style="display: flex; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="filter-checkbox" data-filter="size" value="One Size"> One Size
+            </label>
+          </div>
 
-  <!-- Values -->
-  <section class="values-section section">
-    <div class="container">
-      <div class="section-header reveal">
-        <h2 style="color: var(--cream);">What We Stand For</h2>
-        <div class="divider"></div>
-      </div>
-      <div class="values-grid">
-        <div class="value-card reveal reveal-delay-1">
-          <div class="value-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
-            </svg>
+          <div class="filter-group" style="margin-top: 2rem;">
+            <h5>Price</h5>
+            <button class="filter-btn active" data-filter="price" data-value="All">All Prices</button>
+            <button class="filter-btn" data-filter="price" data-value="Under2000">Under ₹2000</button>
+            <button class="filter-btn" data-filter="price" data-value="2000to4000">₹2000 - ₹4000</button>
+            <button class="filter-btn" data-filter="price" data-value="Over4000">Over ₹4000</button>
           </div>
-          <h4>Minimal Design</h4>
-          <p>Every element earns its place. We remove the unnecessary so what remains is beautiful and functional.</p>
-        </div>
-        <div class="value-card reveal reveal-delay-2">
-          <div class="value-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 22c-4.97 0-9-2.69-9-6v-4"/>
-              <path d="M12 22c4.97 0 9-2.69 9-6v-4"/>
-              <ellipse cx="12" cy="6" rx="9" ry="4"/>
-              <path d="M3 6v6c0 3.31 4.03 6 9 6s9-2.69 9-6V6"/>
-            </svg>
+        </aside>
+
+        <!-- Products -->
+        <div class="shop-main">
+          <div class="shop-toolbar">
+            <span class="shop-count" id="product-count">8 products</span>
+            <div class="shop-sort">
+              <select id="sort-select">
+                <option value="featured">Featured</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="newest">Newest</option>
+              </select>
+            </div>
           </div>
-          <h4>Sustainable Materials</h4>
-          <p>Cork, linen, organic cotton, soy wax — we choose materials that tread lightly on the planet.</p>
-        </div>
-        <div class="value-card reveal reveal-delay-3">
-          <div class="value-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-            </svg>
+          <div class="product-grid" id="product-grid">
+            <!-- Products rendered by JS -->
           </div>
-          <h4>Made with Love</h4>
-          <p>Small-batch production with artisans who value craft over speed and quality over quantity.</p>
         </div>
       </div>
     </div>
@@ -138,7 +135,7 @@
   <!-- Newsletter -->
   <section class="newsletter-section">
     <div class="container">
-      <div class="newsletter-inner reveal">
+      <div class="newsletter-inner">
         <h3>Stay in the Loop</h3>
         <p>Join our community for early access to new releases, exclusive offers, and stories about intentional living.</p>
         <form class="newsletter-form">
@@ -218,19 +215,9 @@
       </div>
     </div>
   </footer>
-
   <!-- Login Modal -->
 
 
-  <script type="module" src="js/common.js"></script>
-  <script type="module" src="js/pages/home.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-      });
-    }
-  </script>
 </body>
 </html>

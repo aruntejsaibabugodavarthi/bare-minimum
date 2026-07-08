@@ -1,3 +1,5 @@
+import { PRODUCTS, cart, auth, showToast } from '../common.js';
+
 // ========== CHECKOUT PAGE ==========
 
 function initCheckoutPage() {
@@ -54,7 +56,7 @@ function initCheckoutPage() {
           <span>₹${total.toFixed(2)}</span>
         </div>
       </div>
-    `;
+    `);
   }
   
   renderCheckoutSummary();
@@ -228,4 +230,8 @@ function initCheckoutPage() {
     });
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(initCheckoutPage, 100);
+});
 

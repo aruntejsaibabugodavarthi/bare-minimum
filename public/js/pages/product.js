@@ -1,3 +1,5 @@
+import { PRODUCTS, cart, showToast } from '../common.js';
+
 // ========== PRODUCT DETAIL PAGE ==========
 
 function initProductPage() {
@@ -10,12 +12,12 @@ function initProductPage() {
 
   if (!product) {
     container.innerHTML = DOMPurify.sanitize(`
-      <div class="container text-center" style="padding: 6rem 0);">
+      <div class="container text-center" style="padding: 6rem 0;">
         <h2>Product not found</h2>
         <p style="margin: 1rem 0 2rem;">The product you're looking for doesn't exist.</p>
         <a href="shop.html" class="btn btn-primary">Browse Shop</a>
       </div>
-    `;
+    `);
     return;
   }
 
@@ -213,7 +215,7 @@ function initProductPage() {
           <div class="product-grid" id="related-grid"></div>
         </div>
       </div>
-    `;
+    `);
 
     // Render related products
     const related = PRODUCTS.filter(p => p.id !== product.id).slice(0, 4);
@@ -236,6 +238,10 @@ function initProductPage() {
         </a>
       `).join(''));
     }
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(initProductPage, 100);
+});
 
     // Event listeners
     

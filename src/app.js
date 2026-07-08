@@ -9,8 +9,11 @@ const adminRoutes = require('./routes/admin.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 const config = require('./config');
+const compression = require('compression');
 
 const app = express();
+
+app.use(compression());
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -23,8 +26,21 @@ app.use(cors({
   credentials: true
 }));
 
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+
+const staticDir = config.env === 'production' ? '../dist' : '../public';
+app.use(express.static(path.join(__dirname, staticDir), {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else {
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+    }
+  }
+}));
 
 // Health Check Endpoint
 app.get('/health', (req, res) => {

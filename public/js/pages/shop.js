@@ -1,3 +1,5 @@
+import { PRODUCTS, auth, cart, showToast } from '../common.js';
+
 // ========== SHOP PAGE ==========
 
 function initShopPage() {
@@ -56,7 +58,7 @@ function initShopPage() {
       <a href="product.html?id=${product.id}" class="product-card reveal visible" id="product-${product.id}">
         <div class="product-card-image">
           ${product.isNew ? '<span class="badge-new">New</span>' : ''}
-          ${auth.getCurrentUser() && auth.getCurrentUser().role === 'admin' ? '<div class="admin-edit-badge" onclick="event.preventDefault()); showToast(&apos;Admin Edit Mode&apos;)">Edit</div>' : ''}
+          ${auth.getCurrentUser() && auth.getCurrentUser().role === 'admin' ? '<div class="admin-edit-badge" onclick="event.preventDefault(); showToast(\'Admin Edit Mode\')">Edit</div>' : ''}
           <img src="${product.image}" alt="${product.name}" loading="lazy">
           <div class="product-card-overlay">
             <span class="btn btn-sm btn-outline-light">View Details</span>
@@ -68,7 +70,7 @@ function initShopPage() {
           <div class="product-card-price">₹${product.price}</div>
         </div>
       </a>
-    `).join('');
+    `).join(''));
   }
 
   // Filter checkboxes (Color & Size)
