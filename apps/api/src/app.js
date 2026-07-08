@@ -43,7 +43,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const staticDir = config.env === 'production' ? '../../old-web/dist' : '../../old-web/public';
+
+// Legacy static file rewrite middleware
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/') && !path.extname(req.path) && req.path !== '/') {
+    const filePath = path.join(__dirname, staticDir, req.path + '.html');
+    return res.sendFile(filePath, (err) => {
+      if (err) next();
+    });
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, staticDir), {
+  extensions: ['html'],
   etag: true,
   lastModified: true,
   setHeaders: (res, path) => {
