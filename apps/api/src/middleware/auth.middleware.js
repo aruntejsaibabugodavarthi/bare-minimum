@@ -1,20 +1,24 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
-const winston = require('winston');
 const config = require('../config');
-const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  format: winston.format.simple(),
-  transports: [new winston.transports.Console()]
-});
+const { logger } = require('./error.middleware');
 
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = null;
+
+  if (req.cookies && req.cookies.accessToken) {
+    token = req.cookies.accessToken;
+  } else {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
 
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, config.jwt.accessSecret);
     req.user = { id: decoded.userId };

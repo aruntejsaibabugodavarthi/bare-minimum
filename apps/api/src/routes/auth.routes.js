@@ -13,7 +13,7 @@ const rateLimit = require('express-rate-limit');
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // limit each IP to 10 requests per windowMs for auth routes
+  max: process.env.NODE_ENV === 'production' ? 10 : 1000, // limit each IP to 10 requests per windowMs for auth routes
   message: 'Too many authentication attempts from this IP, please try again after 15 minutes'
 });
 
@@ -34,7 +34,43 @@ router.post('/register', authLimiter, validate(registerSchema), async (req, res)
     const user = await prisma.user.create({
       data: { email, passwordHash: hashedPassword, name }
     });
-    res.json({ success: true, message: 'Registration successful' });
+
+    const accessToken = jwt.sign({ userId: user.id }, config.jwt.accessSecret, {
+      expiresIn: '15m'
+    });
+    const refreshTokenStr = jwt.sign({ userId: user.id }, config.jwt.refreshSecret, {
+      expiresIn: '7d'
+    });
+
+    await prisma.session.create({
+      data: {
+        refreshTokenHash: await bcrypt.hash(refreshTokenStr, 10),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      }
+    });
+
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    res.cookie('refreshToken', refreshTokenStr, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    // Do not send tokens in JSON body for security
+    res.json({
+      success: true,
+      message: 'Registration successful',
+      user: { id: user.id, email: user.email, name: user.name, role: user.role }
+    });
   } catch (error) {
     logger.error('Registration error:', error);
     res.status(500).json({ success: false, message: 'Server error during registration' });
@@ -54,18 +90,45 @@ router.post('/login-password', authLimiter, validate(loginSchema), async (req, r
     if (!user || !user.passwordHash) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
-    const accessToken = jwt.sign({ userId: user.id }, config.jwt.accessSecret, { expiresIn: '15m' });
-    const refreshTokenStr = jwt.sign({ userId: user.id }, config.jwt.refreshSecret, { expiresIn: '7d' });
-    
-    await prisma.refreshToken.create({
-      data: { tokenHash: await bcrypt.hash(refreshTokenStr, 10), userId: user.id, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) }
+    const accessToken = jwt.sign({ userId: user.id }, config.jwt.accessSecret, {
+      expiresIn: '15m'
     });
-    
-    res.json({ success: true, accessToken, refreshToken: refreshTokenStr, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    const refreshTokenStr = jwt.sign({ userId: user.id }, config.jwt.refreshSecret, {
+      expiresIn: '7d'
+    });
+
+    await prisma.session.create({
+      data: {
+        refreshTokenHash: await bcrypt.hash(refreshTokenStr, 10),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      }
+    });
+
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    res.cookie('refreshToken', refreshTokenStr, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    // Do not send tokens in JSON body for security
+    res.json({
+      success: true,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role }
+    });
   } catch (error) {
     logger.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -79,12 +142,12 @@ const forgotPasswordSchema = z.object({
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     const user = await prisma.user.findUnique({ where: { email } });
     if (user) {
       const resetToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = await bcrypt.hash(resetToken, 10);
-      
+      const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
       await prisma.passwordResetToken.create({
         data: {
           tokenHash,
@@ -94,7 +157,10 @@ router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), asy
       });
       await sendPasswordResetTokenEmail(user.email, resetToken);
     }
-    res.json({ success: true, message: 'If an account exists with this email, a password reset link has been sent.' });
+    res.json({
+      success: true,
+      message: 'If an account exists with this email, a password reset link has been sent.'
+    });
   } catch (error) {
     logger.error('Forgot password error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -110,23 +176,26 @@ const resetPasswordSchema = z.object({
 router.post('/reset-password', authLimiter, validate(resetPasswordSchema), async (req, res) => {
   try {
     const { token, newPassword, email } = req.body;
-    const user = await prisma.user.findUnique({ 
-      where: { email }, 
-      include: { 
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
         passwordResetTokens: {
           where: { expiresAt: { gt: new Date() } }
-        } 
-      } 
+        }
+      }
     });
     if (!user) return res.status(400).json({ success: false, message: 'Invalid request' });
-    
+
     const now = new Date();
     let validTokenId = null;
 
     for (const resetToken of user.passwordResetTokens) {
-      const isValid = await bcrypt.compare(token, resetToken.tokenHash);
-      if (isValid) {
-          validTokenId = resetToken.id;
+      const incomingHash = crypto.createHash('sha256').update(token).digest('hex');
+      if (
+        incomingHash.length === resetToken.tokenHash.length &&
+        crypto.timingSafeEqual(Buffer.from(incomingHash), Buffer.from(resetToken.tokenHash))
+      ) {
+        validTokenId = resetToken.id;
         break;
       }
     }
@@ -146,6 +215,62 @@ router.post('/reset-password', authLimiter, validate(resetPasswordSchema), async
     res.json({ success: true, message: 'Password has been successfully reset' });
   } catch (error) {
     logger.error('Reset password error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.json({ success: true, message: 'Logged out successfully' });
+});
+
+router.post('/refresh', async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken || req.body.refreshToken;
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'No refresh token provided' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, config.jwt.refreshSecret);
+    } catch (err) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+    }
+
+    const session = await prisma.session.findFirst({
+      where: { userId: decoded.userId, expiresAt: { gt: new Date() } }
+    });
+
+    if (!session) {
+      return res
+        .status(401)
+        .json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    if (!user) return res.status(401).json({ success: false, message: 'User not found' });
+
+    const newAccessToken = jwt.sign({ userId: user.id }, config.jwt.accessSecret, {
+      expiresIn: '15m'
+    });
+
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', newAccessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000
+    });
+
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
+      user: { id: user.id, email: user.email, name: user.name, role: user.role }
+    });
+  } catch (error) {
+    logger.error('Refresh token error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

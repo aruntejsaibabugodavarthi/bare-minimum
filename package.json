@@ -5,11 +5,8 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w apps/api\" \"npm run dev -w apps/web\" \"npm run dev -w apps/old-web\"",
+    "dev": "npm run dev -w apps/api & npm run dev -w apps/web & npm run dev -w apps/old-web & npm run dev -w apps/admin & wait",
     "build": "npm run build --workspaces --if-present",
     "install:all": "npm install"
-  },
-  "devDependencies": {
-    "concurrently": "^10.0.3"
   }
 }

@@ -8,7 +8,7 @@ function initProductPage() {
 
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('id');
-  const product = PRODUCTS.find(p => p.id === productId);
+  const product = PRODUCTS.find((p) => p.id === productId);
 
   if (!product) {
     container.innerHTML = `
@@ -24,8 +24,12 @@ function initProductPage() {
   // Set page title
   document.title = `${product.name} — Bare Minimum`;
 
-  const uniqueColors = [...new Set(product.variants ? product.variants.map(v => v.color).filter(Boolean) : [])];
-  const uniqueSizes = [...new Set(product.variants ? product.variants.map(v => v.size).filter(Boolean) : [])];
+  const uniqueColors = [
+    ...new Set(product.variants ? product.variants.map((v) => v.color).filter(Boolean) : [])
+  ];
+  const uniqueSizes = [
+    ...new Set(product.variants ? product.variants.map((v) => v.size).filter(Boolean) : [])
+  ];
 
   let selectedColor = uniqueColors.length > 0 ? uniqueColors[0] : '';
   let selectedSize = uniqueSizes.length > 0 ? uniqueSizes[0] : '';
@@ -39,13 +43,21 @@ function initProductPage() {
             <div class="product-gallery-main" style="position: relative); overflow: hidden; border-radius: 8px;">
               <img src="${product.images[0]}" alt="${product.name}" id="main-image" style="transition: transform 0.3s ease; width: 100%; height: auto; display: block;">
             </div>
-            ${product.images.length > 1 ? `
+            ${
+              product.images.length > 1
+                ? `
             <div class="product-gallery-thumbnails" style="display: flex; gap: 10px; margin-top: 10px;">
-              ${product.images.map((img, idx) => `
+              ${product.images
+                .map(
+                  (img, idx) => `
                 <img src="${img}" class="gallery-thumb ${idx === 0 ? 'active' : ''}" data-src="${img}" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid ${idx === 0 ? '#333' : 'transparent'}; border-radius: 4px; transition: border-color 0.2s;" loading="lazy">
-              `).join('')}
+              `
+                )
+                .join('')}
             </div>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
           <div class="product-info">
             <div class="breadcrumb">
@@ -56,12 +68,16 @@ function initProductPage() {
               <span>${product.name}</span>
             </div>
             <h1>${product.name}</h1>
-            ${product.rating ? `
+            ${
+              product.rating
+                ? `
               <div class="product-rating" style="display: flex; align-items: center; gap: 5px; margin-bottom: 1rem; font-size: 0.9rem;">
                 <span style="color: #c49a6c;">★★★★★</span>
                 <span><strong>${product.rating}</strong> (${product.reviewCount} reviews)</span>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
             <div class="price">
               <span style="font-size: 1.5rem; font-weight: 600; color: #111;">₹${product.price}</span>
               ${product.mrp ? `<span style="font-size: 1rem; color: #888; text-decoration: line-through; margin-left: 0.5rem;">MRP ₹${product.mrp}</span>` : ''}
@@ -69,37 +85,53 @@ function initProductPage() {
             </div>
             <p class="description">${product.description}</p>
 
-            ${uniqueColors.length > 0 ? `
+            ${
+              uniqueColors.length > 0
+                ? `
               <div class="product-options">
                 <div class="option-label" id="color-label">Color — ${selectedColor}</div>
                 <div class="color-options" style="display: flex; gap: 8px;">
-                  ${uniqueColors.map(c => `
+                  ${uniqueColors
+                    .map(
+                      (c) => `
                     <button class="color-selector btn-toggle ${c === selectedColor ? 'active' : ''}" 
                             data-color="${c}" 
                             title="${c}"
                             style="border: 1px solid #ccc; padding: 6px 16px; border-radius: 4px; cursor: pointer; background: ${c === selectedColor ? '#333' : '#fff'}; color: ${c === selectedColor ? '#fff' : '#333'}; font-size: 0.9rem;">
                       ${c}
                     </button>
-                  `).join('')}
+                  `
+                    )
+                    .join('')}
                 </div>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
 
-            ${uniqueSizes.length > 0 ? `
+            ${
+              uniqueSizes.length > 0
+                ? `
               <div class="product-options" style="margin-top: 1rem;">
                 <div class="option-label" id="size-label">Size — ${selectedSize}</div>
                 <div class="size-options" style="display: flex; gap: 8px;">
-                  ${uniqueSizes.map(s => `
+                  ${uniqueSizes
+                    .map(
+                      (s) => `
                     <button class="size-swatch btn-toggle ${s === selectedSize ? 'active' : ''}" 
                             data-size="${s}" 
                             title="${s}"
                             style="border: 1px solid #ccc; padding: 4px 12px; border-radius: 4px; cursor: pointer; background: ${s === selectedSize ? '#333' : '#fff'}; color: ${s === selectedSize ? '#fff' : '#333'};">
                       ${s}
                     </button>
-                  `).join('')}
+                  `
+                    )
+                    .join('')}
                 </div>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
 
             <div class="option-label">Quantity</div>
             <div class="quantity-selector">
@@ -182,15 +214,23 @@ function initProductPage() {
           <div class="section-header text-center">
             <h2>Customer Reviews</h2>
             <div class="divider mx-auto" style="margin: 1rem auto;"></div>
-            ${product.rating ? `
+            ${
+              product.rating
+                ? `
               <div class="overall-rating" style="margin-top: 1.5rem; font-size: 1.1rem;">
                 <span style="color: #c49a6c; font-size: 1.5rem;">★★★★★</span>
                 <p style="margin-top: 0.5rem; color: #555;"><strong>${product.rating} out of 5</strong> based on ${product.reviewCount} reviews</p>
               </div>
-            ` : ''}
+            `
+                : ''
+            }
           </div>
           <div class="reviews-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
-            ${product.reviews ? product.reviews.map(r => `
+            ${
+              product.reviews
+                ? product.reviews
+                    .map(
+                      (r) => `
               <div class="review-card" style="background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
                 <div class="review-header" style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
                   <span class="review-author" style="font-weight: 600;">${r.author}</span>
@@ -201,7 +241,11 @@ function initProductPage() {
                 </div>
                 <p class="review-text" style="color: #444; line-height: 1.6;">"${r.text}"</p>
               </div>
-            `).join('') : '<p class="text-center" style="grid-column: 1/-1;">No reviews yet.</p>'}
+            `
+                    )
+                    .join('')
+                : '<p class="text-center" style="grid-column: 1/-1;">No reviews yet.</p>'
+            }
           </div>
         </div>
       </div>
@@ -218,10 +262,12 @@ function initProductPage() {
     `;
 
     // Render related products
-    const related = PRODUCTS.filter(p => p.id !== product.id).slice(0, 4);
+    const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
     const relatedGrid = document.getElementById('related-grid');
     if (relatedGrid) {
-      relatedGrid.innerHTML = related.map(p => `
+      relatedGrid.innerHTML = related
+        .map(
+          (p) => `
         <a href="product.html?id=${p.id}" class="product-card">
           <div class="product-card-image">
             ${p.isNew ? '<span class="badge-new">New</span>' : ''}
@@ -236,15 +282,12 @@ function initProductPage() {
             <div class="product-card-price">₹${p.price}</div>
           </div>
         </a>
-      `).join('');
+      `
+        )
+        .join('');
     }
-
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(initProductPage, 100);
-});
-
     // Event listeners
-    
+
     // Gallery
     const mainImage = document.getElementById('main-image');
     // Hover zoom effect
@@ -260,18 +303,20 @@ document.addEventListener('DOMContentLoaded', () => {
       mainImage.style.transform = 'scale(1)';
     });
 
-    document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+    document.querySelectorAll('.gallery-thumb').forEach((thumb) => {
       thumb.addEventListener('click', () => {
-        document.querySelectorAll('.gallery-thumb').forEach(t => t.style.borderColor = 'transparent');
+        document
+          .querySelectorAll('.gallery-thumb')
+          .forEach((t) => (t.style.borderColor = 'transparent'));
         thumb.style.borderColor = '#333';
         mainImage.src = thumb.dataset.src;
       });
     });
 
     // Color swatches
-    document.querySelectorAll('.color-selector').forEach(swatch => {
+    document.querySelectorAll('.color-selector').forEach((swatch) => {
       swatch.addEventListener('click', () => {
-        document.querySelectorAll('.color-selector').forEach(s => {
+        document.querySelectorAll('.color-selector').forEach((s) => {
           s.classList.remove('active');
           s.style.background = '#fff';
           s.style.color = '#333';
@@ -285,9 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    document.querySelectorAll('.size-swatch').forEach(swatch => {
+    document.querySelectorAll('.size-swatch').forEach((swatch) => {
       swatch.addEventListener('click', () => {
-        document.querySelectorAll('.size-swatch').forEach(s => {
+        document.querySelectorAll('.size-swatch').forEach((s) => {
           s.classList.remove('active');
           s.style.background = '#fff';
           s.style.color = '#333';
@@ -318,18 +363,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add to cart
     document.getElementById('add-to-cart-btn')?.addEventListener('click', () => {
-      cart.addItem(product.id, quantity, selectedColor + (selectedSize ? ' / ' + selectedSize : ''));
+      cart.addItem(
+        product.id,
+        quantity,
+        selectedColor + (selectedSize ? ' / ' + selectedSize : '')
+      );
     });
 
     // Accordion
-    document.querySelectorAll('.accordion-trigger').forEach(trigger => {
+    document.querySelectorAll('.accordion-trigger').forEach((trigger) => {
       trigger.addEventListener('click', () => {
         const item = trigger.closest('.accordion-item');
         const content = item.querySelector('.accordion-content');
         const isOpen = item.classList.contains('open');
 
         // Close all
-        document.querySelectorAll('.accordion-item').forEach(ai => {
+        document.querySelectorAll('.accordion-item').forEach((ai) => {
           ai.classList.remove('open');
           ai.querySelector('.accordion-content').style.maxHeight = '0';
           ai.querySelector('.accordion-trigger').setAttribute('aria-expanded', 'false');
@@ -347,3 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderProduct();
 }
 
+function runInit() {
+  if (window.PRODUCTS_LOADED) {
+    initProductPage();
+  } else {
+    document.addEventListener('productsLoaded', initProductPage);
+  }
+}
+
+runInit();

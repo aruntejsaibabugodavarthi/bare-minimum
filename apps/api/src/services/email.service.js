@@ -1,34 +1,24 @@
 const nodemailer = require('nodemailer');
-const winston = require('winston');
-
-const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    })
-  ]
-});
+const { logger } = require('../middleware/error.middleware');
 
 let emailTransporter;
-nodemailer.createTestAccount().then(account => {
-  emailTransporter = nodemailer.createTransport({
-    host: account.smtp.host,
-    port: account.smtp.port,
-    secure: account.smtp.secure,
-    auth: { user: account.user, pass: account.pass }
+nodemailer
+  .createTestAccount()
+  .then((account) => {
+    emailTransporter = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: { user: account.user, pass: account.pass }
+    });
+    logger.info('Ethereal Email transporter created for development.');
+  })
+  .catch((err) => {
+    logger.error(
+      'Failed to create Ethereal Email test account (network issue). Emails will not be sent.',
+      err.message
+    );
   });
-  logger.info('Ethereal Email transporter created for development.');
-}).catch(err => {
-  logger.error('Failed to create Ethereal Email test account (network issue). Emails will not be sent.', err.message);
-});
 
 async function sendOrderConfirmationEmail(userEmail, orderDetails) {
   if (!emailTransporter || !userEmail) return;

@@ -81,7 +81,7 @@ async function main() {
     const product = await prisma.product.upsert({
       where: { slug: p.slug },
       update: {},
-      create: p,
+      create: p
     });
     console.log(`Created product with id: ${product.id} (${product.name})`);
   }

@@ -5,15 +5,15 @@ const config = {
   port: parseInt(process.env.PORT, 10) || 8081,
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,
-    refreshSecret: process.env.JWT_REFRESH_SECRET,
+    refreshSecret: process.env.JWT_REFRESH_SECRET
   },
   razorpay: {
     keyId: process.env.RAZORPAY_KEY_ID,
-    keySecret: process.env.RAZORPAY_KEY_SECRET,
+    keySecret: process.env.RAZORPAY_KEY_SECRET
   },
-  allowedOrigins: process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:8081'],
+  allowedOrigins: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:8081']
 };
 
 // Validate critical config on startup

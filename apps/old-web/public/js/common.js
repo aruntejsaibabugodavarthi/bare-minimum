@@ -4,12 +4,20 @@
 
 export let PRODUCTS = [];
 
+function safeJSONParse(str, fallback = null) {
+  if (!str || str === 'undefined') return fallback;
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return fallback;
+  }
+}
 
 // ========== CART MANAGEMENT ==========
 
 class Cart {
   constructor() {
-    this.items = JSON.parse(localStorage.getItem('bm_cart')) || [];
+    this.items = safeJSONParse(localStorage.getItem('bm_cart'), []);
     this.updateBadge();
   }
 
@@ -20,7 +28,7 @@ class Cart {
 
   addItem(productId, quantity = 1, color = '') {
     const existing = this.items.find(
-      item => item.productId === productId && item.color === color
+      (item) => item.productId === productId && item.color === color
     );
     if (existing) {
       existing.quantity += quantity;
@@ -47,14 +55,14 @@ class Cart {
 
   getTotal() {
     return this.items.reduce((sum, item) => {
-      const product = PRODUCTS.find(p => p.id === item.productId);
+      const product = PRODUCTS.find((p) => p.id === item.productId);
       return sum + (product ? product.price * item.quantity : 0);
     }, 0);
   }
 
   getTax() {
     return this.items.reduce((sum, item) => {
-      const product = PRODUCTS.find(p => p.id === item.productId);
+      const product = PRODUCTS.find((p) => p.id === item.productId);
       if (product && product.gstSlab) {
         const gstRate = product.gstSlab / 100;
         const basePrice = product.price / (1 + gstRate);
@@ -77,7 +85,7 @@ class Cart {
   updateBadge() {
     const badges = document.querySelectorAll('.cart-badge');
     const count = this.getItemCount();
-    badges.forEach(badge => {
+    badges.forEach((badge) => {
       badge.textContent = count;
       badge.classList.toggle('visible', count > 0);
     });
@@ -115,7 +123,7 @@ export function showToast(message) {
     setTimeout(() => toast.remove(), 400);
   }, 2500);
 }
-
+window.showToast = showToast;
 
 // ========== NAVIGATION ==========
 
@@ -124,15 +132,19 @@ function initNavigation() {
   let lastScroll = 0;
   const nav = document.querySelector('.nav');
 
-  window.addEventListener('scroll', () => {
-    const currentScroll = window.scrollY;
-    if (currentScroll > 50) {
-      nav.classList.add('scrolled');
-    } else {
-      nav.classList.remove('scrolled');
-    }
-    lastScroll = currentScroll;
-  }, { passive: true });
+  window.addEventListener(
+    'scroll',
+    () => {
+      const currentScroll = window.scrollY;
+      if (currentScroll > 50) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+      lastScroll = currentScroll;
+    },
+    { passive: true }
+  );
 
   // Mobile menu toggle
   const toggle = document.querySelector('.nav-toggle');
@@ -146,7 +158,7 @@ function initNavigation() {
     });
 
     // Close menu on link click
-    links.querySelectorAll('a').forEach(link => {
+    links.querySelectorAll('a').forEach((link) => {
       link.addEventListener('click', () => {
         toggle.classList.remove('active');
         links.classList.remove('open');
@@ -155,7 +167,6 @@ function initNavigation() {
     });
   }
 }
-
 
 // ========== SEARCH & AUTOCOMPLETE ==========
 
@@ -175,7 +186,7 @@ function initSearch() {
     </div>
     <div id="search-results" class="search-results-overlay"></div>
   `);
-  
+
   const cartLink = navLinks.querySelector('.nav-cart');
   if (cartLink) {
     navLinks.insertBefore(searchContainer, cartLink);
@@ -193,14 +204,18 @@ function initSearch() {
       return;
     }
 
-    const matched = PRODUCTS.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.category.toLowerCase().includes(query) ||
-      p.description.toLowerCase().includes(query)
+    const matched = PRODUCTS.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query)
     ).slice(0, 5);
 
     if (matched.length > 0) {
-      searchResults.innerHTML = DOMPurify.sanitize(matched.map(p => `
+      searchResults.innerHTML = DOMPurify.sanitize(
+        matched
+          .map(
+            (p) => `
         <a href="product.html?id=${p.id}" class="search-result-item">
           <img src="${p.image}" alt="${p.name}" loading="lazy">
           <div class="search-result-info">
@@ -208,9 +223,14 @@ function initSearch() {
             <div class="search-result-price">₹${p.price}</div>
           </div>
         </a>
-      `).join(''));
+      `
+          )
+          .join('')
+      );
     } else {
-      searchResults.innerHTML = DOMPurify.sanitize('<div class="search-result-empty">No products found.</div>');
+      searchResults.innerHTML = DOMPurify.sanitize(
+        '<div class="search-result-empty">No products found.</div>'
+      );
     }
     searchResults.classList.add('visible');
   });
@@ -223,28 +243,29 @@ function initSearch() {
   });
 }
 
-
 // ========== SCROLL REVEAL ==========
 
 function initScrollReveal() {
   const reveals = document.querySelectorAll('.reveal');
   if (!reveals.length) return;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, {
-    threshold: 0.1,
-    rootMargin: '0px 0px -60px 0px'
-  });
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.1,
+      rootMargin: '0px 0px -60px 0px'
+    }
+  );
 
-  reveals.forEach(el => observer.observe(el));
+  reveals.forEach((el) => observer.observe(el));
 }
-
 
 // ========== NEWSLETTER ==========
 
@@ -262,76 +283,76 @@ function initNewsletter() {
   });
 }
 
-
 // ========== AUTHENTICATION ==========
 
 export class Auth {
   constructor() {
-    this.token = localStorage.getItem('bm_access_token');
-    this.refreshToken = localStorage.getItem('bm_refresh_token');
-    this.user = JSON.parse(localStorage.getItem('bm_user')) || null;
+    this.user = safeJSONParse(localStorage.getItem('bm_user'), null);
+    this.csrfToken = null;
+    this.fetchCsrfToken();
   }
 
-  setSession(tokens, user) {
-    this.token = tokens.accessToken;
-    this.refreshToken = tokens.refreshToken;
+  async fetchCsrfToken() {
+    try {
+      const res = await fetch('/api/csrf-token', { credentials: 'same-origin' });
+      const data = await res.json();
+      if (data.success) {
+        this.csrfToken = data.csrfToken;
+      }
+    } catch (e) {
+      console.error('Failed to fetch CSRF token', e);
+    }
+  }
+
+  setSession(user) {
     this.user = user;
-    localStorage.setItem('bm_access_token', this.token);
-    localStorage.setItem('bm_refresh_token', this.refreshToken);
     localStorage.setItem('bm_user', JSON.stringify(user));
   }
 
   async logout() {
-    if (this.refreshToken) {
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken: this.refreshToken })
-        });
-      } catch (e) {
-        console.error('Logout error', e);
-      }
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.csrfToken
+        },
+        credentials: 'same-origin'
+      });
+    } catch (e) {
+      console.error('Logout error', e);
     }
-    this.token = null;
-    this.refreshToken = null;
     this.user = null;
-    localStorage.removeItem('bm_access_token');
-    localStorage.removeItem('bm_refresh_token');
     localStorage.removeItem('bm_user');
     showToast('Logged out');
     setTimeout(() => location.reload(), 500);
   }
 
   async fetchWithAuth(url, options = {}) {
-    if (!this.token) {
+    if (!this.user) {
       window.location.href = 'login.html';
       return;
     }
-    
+
+    // Ensure cookies are sent with requests
+    options.credentials = 'same-origin';
     options.headers = options.headers || {};
-    options.headers['Authorization'] = `Bearer ${this.token}`;
-    
+
+    // Add CSRF token for state-changing requests
+    if (
+      this.csrfToken &&
+      options.method &&
+      !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())
+    ) {
+      options.headers['X-CSRF-Token'] = this.csrfToken;
+    }
+
     let res = await fetch(url, options);
-    
-    if (res.status === 401 && this.refreshToken) {
-      // Try refresh
-      const refreshRes = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: this.refreshToken })
-      });
-      
-      if (refreshRes.ok) {
-        const data = await refreshRes.json();
-        this.setSession({ accessToken: data.accessToken, refreshToken: data.refreshToken }, this.user);
-        
-        // Retry original request
-        options.headers['Authorization'] = `Bearer ${this.token}`;
-        res = await fetch(url, options);
-      } else {
-        this.logout();
-      }
+
+    if (res.status === 401) {
+      // The backend should automatically check the refresh cookie
+      // If it returns 401, the refresh token is also invalid/expired.
+      this.logout();
     }
     return res;
   }
@@ -342,6 +363,7 @@ export class Auth {
 }
 
 export const auth = new Auth();
+window.auth = auth;
 
 function initAuth() {
   // 1. Setup Navigation Auth State
@@ -353,7 +375,8 @@ function initAuth() {
 
     if (user) {
       const initial = (user.name || user.email || user.phone || 'U').charAt(0).toUpperCase();
-      let adminLink = user.role === 'admin' ? '<a href="admin.html" class="nav-admin">Dashboard</a>' : '';
+      let adminLink =
+        user.role === 'admin' ? '<a href="admin.html" class="nav-admin">Dashboard</a>' : '';
       authContainer.innerHTML = DOMPurify.sanitize(`
         ${adminLink}
         <a href="account.html" class="nav-avatar" title="My Account">
@@ -364,7 +387,7 @@ function initAuth() {
             </svg>
           </span>
         </a>
-        <a href="#" onclick="event.preventDefault(); auth.logout();" class="auth-link">Logout</a>
+        <a href="#" id="logout-btn" class="auth-link">Logout</a>
       `);
     } else {
       authContainer.innerHTML = DOMPurify.sanitize(`
@@ -372,6 +395,16 @@ function initAuth() {
       `);
     }
     navLinks.appendChild(authContainer);
+
+    if (user) {
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          auth.logout();
+        });
+      }
+    }
   }
 
   // 2. Auth Page Logic (only runs if on login.html)
@@ -379,7 +412,7 @@ function initAuth() {
   const otpVerifyForm = document.getElementById('otp-verify-form');
   const emailLoginForm = document.getElementById('email-login-form');
   const btnGoogleLogin = document.getElementById('btn-google-login');
-  
+
   let currentPhone = '';
 
   if (otpRequestForm) {
@@ -390,10 +423,12 @@ function initAuth() {
       try {
         const res = await fetch('/api/auth/request-otp', {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'Idempotency-Key': idempotencyKey
+            'Idempotency-Key': idempotencyKey,
+            'X-CSRF-Token': auth.csrfToken
           },
+          credentials: 'same-origin',
           body: JSON.stringify({ phone: currentPhone })
         });
         const data = await res.json();
@@ -417,12 +452,16 @@ function initAuth() {
       try {
         const res = await fetch('/api/auth/verify-otp', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': auth.csrfToken
+          },
+          credentials: 'same-origin',
           body: JSON.stringify({ phone: currentPhone, otp })
         });
         const data = await res.json();
         if (data.success) {
-          auth.setSession({ accessToken: data.accessToken, refreshToken: data.refreshToken }, data.user);
+          auth.setSession(data.user);
           if (data.new_user) {
             window.location.href = 'account.html';
           } else {
@@ -445,12 +484,16 @@ function initAuth() {
       try {
         const res = await fetch('/api/auth/login-password', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': auth.csrfToken
+          },
+          credentials: 'same-origin',
           body: JSON.stringify({ email, password })
         });
         const data = await res.json();
         if (data.success) {
-          auth.setSession({ accessToken: data.accessToken, refreshToken: data.refreshToken }, data.user);
+          auth.setSession(data.user);
           window.location.href = 'index.html';
         } else {
           showToast(data.message);
@@ -465,23 +508,27 @@ function initAuth() {
     btnGoogleLogin.addEventListener('click', async (e) => {
       e.preventDefault();
       // MOCK Google OAuth Flow
-      const mockEmail = prompt("MOCK OAUTH: Enter email to simulate google login returning:");
+      const mockEmail = prompt('MOCK OAUTH: Enter email to simulate google login returning:');
       if (!mockEmail) return;
-      
+
       try {
         const res = await fetch('/api/auth/social-login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            email: mockEmail, 
-            name: mockEmail.split('@')[0], 
-            provider: 'google', 
-            providerId: 'g_' + Math.random().toString(36).substr(2) 
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': auth.csrfToken
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            email: mockEmail,
+            name: mockEmail.split('@')[0],
+            provider: 'google',
+            providerId: 'g_' + Math.random().toString(36).substr(2)
           })
         });
         const data = await res.json();
         if (data.success) {
-          auth.setSession({ accessToken: data.accessToken, refreshToken: data.refreshToken }, data.user);
+          auth.setSession(data.user);
           window.location.href = 'index.html';
         } else {
           showToast(data.message);
@@ -492,7 +539,6 @@ function initAuth() {
     });
   }
 }
-
 
 // ========== SUPPORT WIDGET ==========
 
@@ -525,7 +571,7 @@ function initSupportWidget() {
 
   const toggleBtn = document.getElementById('support-toggle');
   const panel = document.getElementById('support-panel');
-  
+
   if (toggleBtn && panel) {
     toggleBtn.addEventListener('click', () => {
       toggleBtn.classList.toggle('active');
@@ -534,13 +580,12 @@ function initSupportWidget() {
   }
 }
 
-
 // ========== DPDP CONSENT MANAGER ==========
 
 class ConsentManager {
   constructor() {
     this.storageKey = 'bm_consent';
-    this.consentState = JSON.parse(localStorage.getItem(this.storageKey));
+    this.consentState = safeJSONParse(localStorage.getItem(this.storageKey), null);
     this.init();
   }
 
@@ -552,7 +597,7 @@ class ConsentManager {
 
   showBanner() {
     if (document.getElementById('consent-banner')) return;
-    
+
     const banner = document.createElement('div');
     banner.id = 'consent-banner';
     banner.style.cssText = `
@@ -612,7 +657,6 @@ class ConsentManager {
   }
 }
 
-
 // ========== INIT ==========
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -620,12 +664,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const res = await fetch('/api/products');
     const data = await res.json();
     if (data.success) {
-      PRODUCTS = data.products.map(p => ({
+      PRODUCTS = data.products.map((p) => ({
         ...p,
         // The API returns 'images' as a parsed JSON array, and 'slug' as 'id' for the frontend
+        images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
         id: p.slug,
-        image: typeof p.images === 'string' ? JSON.parse(p.images)[0] : (p.images && p.images[0]),
-        variants: [ // Quick mock of variants since we don't have them in the new schema yet
+        image: typeof p.images === 'string' ? JSON.parse(p.images)[0] : p.images && p.images[0],
+        variants: [
+          // Quick mock of variants since we don't have them in the new schema yet
           { id: p.slug + '-v1', size: 'Standard', color: 'Standard', stock: p.stock }
         ],
         isNew: true,

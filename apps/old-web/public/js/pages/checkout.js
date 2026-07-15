@@ -8,22 +8,24 @@ function initCheckoutPage() {
 
   function renderCheckoutSummary() {
     if (cart.items.length === 0) {
-      summaryContainer.innerHTML = DOMPurify.sanitize('<p>Your cart is empty. <a href="shop.html">Return to shop</a>.</p>');
+      summaryContainer.innerHTML =
+        '<p>Your cart is empty. <a href="shop.html">Return to shop</a>.</p>';
       return;
     }
-    
+
     const subtotal = cart.getTotal();
     const shipping = subtotal >= 6000 ? 0 : 500;
     const tax = Math.round(cart.getTax() * 100) / 100;
     const total = subtotal + shipping;
 
-    summaryContainer.innerHTML = DOMPurify.sanitize(`
-      <h3 style="font-size: 1.25rem); margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Order Summary</h3>
+    summaryContainer.innerHTML = `
+      <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Order Summary</h3>
       <div class="checkout-items" style="margin-bottom: 1.5rem;">
-        ${cart.items.map((item) => {
-          const product = PRODUCTS.find(p => p.id === item.productId);
-          if (!product) return '';
-          return `
+        ${cart.items
+          .map((item) => {
+            const product = PRODUCTS.find((p) => p.id === item.productId);
+            if (!product) return '';
+            return `
             <div style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
               <div style="position: relative;">
                 <img src="${product.image}" alt="${product.name}" style="width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;" loading="lazy">
@@ -36,7 +38,8 @@ function initCheckoutPage() {
               <div style="font-weight: 500;">₹${(product.price * item.quantity).toFixed(2)}</div>
             </div>
           `;
-        }).join('')}
+          })
+          .join('')}
       </div>
       <div style="border-top: 1px solid #eee; padding-top: 1rem;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
@@ -56,9 +59,9 @@ function initCheckoutPage() {
           <span>₹${total.toFixed(2)}</span>
         </div>
       </div>
-    `);
+    `;
   }
-  
+
   renderCheckoutSummary();
 
   const checkoutForm = document.getElementById('checkout-form');
@@ -82,14 +85,15 @@ function initCheckoutPage() {
             cityInput.value = data.city;
             stateInput.value = data.state;
             isServiceable = data.serviceable;
-            
+
             if (isServiceable) {
               const d1 = new Date(data.estimatedMin).toLocaleDateString();
               const d2 = new Date(data.estimatedMax).toLocaleDateString();
               serviceabilityMsg.textContent = `Serviceable! Delivery estimated between ${d1} and ${d2}.`;
               serviceabilityMsg.style.color = 'green';
             } else {
-              serviceabilityMsg.textContent = 'Sorry, we do not deliver to this pincode at the moment.';
+              serviceabilityMsg.textContent =
+                'Sorry, we do not deliver to this pincode at the moment.';
               serviceabilityMsg.style.color = 'red';
             }
           } else {
@@ -115,15 +119,15 @@ function initCheckoutPage() {
   if (checkoutForm) {
     checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const activeTab = document.querySelector('.payment-tab.active');
       const paymentMethod = activeTab ? activeTab.dataset.target : 'card';
-      
+
       const emailInput = document.getElementById('checkout-email');
       const phoneInput = document.getElementById('checkout-phone');
       const contact = emailInput ? emailInput.value : '';
       const user = auth.getCurrentUser();
-      
+
       const subtotal = cart.getTotal();
       const shipping = subtotal >= 6000 ? 0 : 500;
       const tax = Math.round(cart.getTax() * 100) / 100;
@@ -136,14 +140,22 @@ function initCheckoutPage() {
 
       if (paymentMethod === 'cod') {
         if (!user || !user.is_verified) {
-          alert('Cash on Delivery is only available for verified accounts. Please log in with a verified phone number.');
+          alert(
+            'Cash on Delivery is only available for verified accounts. Please log in with a verified phone number.'
+          );
           return;
         }
       }
 
-      const address1 = document.getElementById('checkout-address1') ? document.getElementById('checkout-address1').value : '';
-      const address2 = document.getElementById('checkout-address2') ? document.getElementById('checkout-address2').value : '';
-      const landmark = document.getElementById('checkout-landmark') ? document.getElementById('checkout-landmark').value : '';
+      const address1 = document.getElementById('checkout-address1')
+        ? document.getElementById('checkout-address1').value
+        : '';
+      const address2 = document.getElementById('checkout-address2')
+        ? document.getElementById('checkout-address2').value
+        : '';
+      const landmark = document.getElementById('checkout-landmark')
+        ? document.getElementById('checkout-landmark').value
+        : '';
       const city = cityInput ? cityInput.value : '';
       const state = stateInput ? stateInput.value : '';
       const pincode = pincodeInput ? pincodeInput.value : '';
@@ -154,18 +166,18 @@ function initCheckoutPage() {
         const response = await window.auth.fetchWithAuth('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             paymentMethod,
             contact,
             address,
-            items: cart.items.map(item => ({
+            items: cart.items.map((item) => ({
               productId: item.productId,
               quantity: item.quantity
             }))
           })
         });
         const data = await response.json();
-        
+
         if (!data.success) {
           alert('Failed to initialize order: ' + (data.message || 'Server error'));
           return;
@@ -176,28 +188,24 @@ function initCheckoutPage() {
           cart.clear();
           window.location.href = 'invoice.html?id=' + data.orderId;
           return;
-        } else {
-          alert('Order placed successfully! (Note: Payment Gateway is in Sandbox mode)');
-          cart.clear();
-          window.location.href = 'invoice.html?id=' + data.orderId;
-          return;
         }
 
         const options = {
           key: data.keyId,
           amount: data.amount,
           currency: data.currency,
-          name: "Bare Minimum",
-          description: "Curated Essentials",
-          order_id: data.orderId,
+          name: 'Bare Minimum',
+          description: 'Curated Essentials',
+          order_id: data.razorpayOrderId,
           handler: async function (response) {
-            const verifyRes = await fetch('/verify-payment', {
+            const verifyRes = await window.auth.fetchWithAuth('/api/payment/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature
+                razorpay_signature: response.razorpay_signature,
+                orderId: data.orderId
               })
             });
             const verifyData = await verifyRes.json();
@@ -210,16 +218,16 @@ function initCheckoutPage() {
             }
           },
           prefill: {
-            name: "Test User",
-            email: "test@bareminimum.example.com",
-            contact: "9999999999"
+            name: 'Test User',
+            email: 'test@bareminimum.example.com',
+            contact: '9999999999'
           },
           theme: {
-            color: "#c49a6c"
+            color: '#c49a6c'
           }
         };
         const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function (response){
+        rzp.on('payment.failed', function (response) {
           alert('Payment Failed: ' + response.error.description);
         });
         rzp.open();
@@ -234,4 +242,3 @@ function initCheckoutPage() {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(initCheckoutPage, 100);
 });
-

@@ -11,22 +11,54 @@ function initShopPage() {
   let currentSort = 'featured';
 
   function renderProducts() {
+    // Populate categories if not done yet
+    const categoryGroup = document.querySelector('.filter-group');
+    if (categoryGroup && !categoryGroup.dataset.populated) {
+      const existingButtons = Array.from(
+        categoryGroup.querySelectorAll('.filter-btn[data-filter="category"]')
+      ).map((btn) => btn.dataset.value);
+      const allCategories = new Set(PRODUCTS.map((p) => p.category).filter(Boolean));
+      allCategories.forEach((cat) => {
+        if (!existingButtons.includes(cat)) {
+          const btn = document.createElement('button');
+          btn.className = 'filter-btn';
+          btn.dataset.filter = 'category';
+          btn.dataset.value = cat;
+          btn.textContent = cat;
+          btn.addEventListener('click', () => {
+            categoryGroup
+              .querySelectorAll('.filter-btn')
+              .forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilters.category = cat;
+            renderProducts();
+          });
+          categoryGroup.appendChild(btn);
+        }
+      });
+      categoryGroup.dataset.populated = 'true';
+    }
+
     let filtered = [...PRODUCTS];
 
     if (currentFilters.category !== 'All') {
-      filtered = filtered.filter(p => p.category === currentFilters.category);
+      filtered = filtered.filter((p) => p.category === currentFilters.category);
     }
-    
+
     if (currentFilters.color.length > 0) {
-      filtered = filtered.filter(p => p.variants && p.variants.some(v => currentFilters.color.includes(v.color)));
+      filtered = filtered.filter(
+        (p) => p.variants && p.variants.some((v) => currentFilters.color.includes(v.color))
+      );
     }
 
     if (currentFilters.size.length > 0) {
-      filtered = filtered.filter(p => p.variants && p.variants.some(v => currentFilters.size.includes(v.size)));
+      filtered = filtered.filter(
+        (p) => p.variants && p.variants.some((v) => currentFilters.size.includes(v.size))
+      );
     }
 
     if (currentFilters.price !== 'All') {
-      filtered = filtered.filter(p => {
+      filtered = filtered.filter((p) => {
         if (currentFilters.price === 'Under2000') return p.price < 2000;
         if (currentFilters.price === '2000to4000') return p.price >= 2000 && p.price <= 4000;
         if (currentFilters.price === 'Over4000') return p.price > 4000;
@@ -54,7 +86,9 @@ function initShopPage() {
       countEl.textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
     }
 
-    grid.innerHTML = filtered.map(product => `
+    grid.innerHTML = filtered
+      .map(
+        (product) => `
       <a href="product.html?id=${product.id}" class="product-card reveal visible" id="product-${product.id}">
         <div class="product-card-image">
           ${product.isNew ? '<span class="badge-new">New</span>' : ''}
@@ -70,45 +104,47 @@ function initShopPage() {
           <div class="product-card-price">₹${product.price}</div>
         </div>
       </a>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   // Filter checkboxes (Color & Size)
-  document.querySelectorAll('.filter-checkbox').forEach(cb => {
+  document.querySelectorAll('.filter-checkbox').forEach((cb) => {
     cb.addEventListener('change', () => {
       const filterType = cb.dataset.filter;
       const filterValue = cb.value;
-      
+
       if (cb.checked) {
         if (!currentFilters[filterType].includes(filterValue)) {
           currentFilters[filterType].push(filterValue);
         }
       } else {
-        currentFilters[filterType] = currentFilters[filterType].filter(v => v !== filterValue);
+        currentFilters[filterType] = currentFilters[filterType].filter((v) => v !== filterValue);
       }
-      
+
       renderProducts();
     });
   });
 
   // Category & Price filter buttons
-  document.querySelectorAll('.filter-btn').forEach(btn => {
+  document.querySelectorAll('.filter-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const filterType = btn.dataset.filter;
       const filterValue = btn.dataset.value;
-      
+
       const parentGroup = btn.closest('.filter-group');
       if (parentGroup) {
-        parentGroup.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        parentGroup.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
       }
       btn.classList.add('active');
-      
+
       if (filterType) {
         currentFilters[filterType] = filterValue;
       } else if (btn.dataset.category) {
         currentFilters.category = btn.dataset.category;
       }
-      
+
       renderProducts();
     });
   });

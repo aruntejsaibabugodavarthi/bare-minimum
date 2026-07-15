@@ -38,11 +38,12 @@ function initCartPage() {
             <span>Total</span>
             <span></span>
           </div>
-          ${cart.items.map((item, index) => {
-            const product = PRODUCTS.find(p => p.id === item.productId);
-            if (!product) return '';
-            const itemTotal = product.price * item.quantity;
-            return `
+          ${cart.items
+            .map((item, index) => {
+              const product = PRODUCTS.find((p) => p.id === item.productId);
+              if (!product) return '';
+              const itemTotal = product.price * item.quantity;
+              return `
               <div class="cart-item" data-index="${index}">
                 <div class="cart-item-info">
                   <div class="cart-item-image">
@@ -55,12 +56,12 @@ function initCartPage() {
                 </div>
                 <div class="cart-item-price">₹${product.price}</div>
                 <div class="cart-item-qty">
-                  <button onclick="updateCartItem(${index}, ${item.quantity - 1})" aria-label="Decrease">−</button>
+                  <button class="qty-btn" data-action="decrease" data-index="${index}" aria-label="Decrease">−</button>
                   <span>${item.quantity}</span>
-                  <button onclick="updateCartItem(${index}, ${item.quantity + 1})" aria-label="Increase">+</button>
+                  <button class="qty-btn" data-action="increase" data-index="${index}" aria-label="Increase">+</button>
                 </div>
                 <div class="cart-item-total">₹${itemTotal}</div>
-                <button class="cart-item-remove" onclick="removeCartItem(${index})" aria-label="Remove item">
+                <button class="cart-item-remove remove-btn" data-index="${index}" aria-label="Remove item">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"/>
                     <line x1="6" y1="6" x2="18" y2="18"/>
@@ -68,7 +69,8 @@ function initCartPage() {
                 </button>
               </div>
             `;
-          }).join('')}
+            })
+            .join('')}
         </div>
 
         <div class="cart-summary">
@@ -85,18 +87,22 @@ function initCartPage() {
             <span class="label">Shipping</span>
             <span class="value">${shipping === 0 ? 'Free' : '₹' + shipping.toFixed(2)}</span>
           </div>
-          ${shipping > 0 ? `
+          ${
+            shipping > 0
+              ? `
             <div class="cart-summary-row" style="margin-top: 0;">
               <span class="label" style="font-size: 0.75rem; color: var(--copper);">Free shipping on orders ₹6000+</span>
             </div>
-          ` : ''}
+          `
+              : ''
+          }
           <div class="cart-summary-row total">
             <span class="label">Total</span>
             <span class="value">₹${total.toFixed(2)}</span>
           </div>
           <div class="promo-code">
             <input type="text" placeholder="Promo code" id="promo-input">
-            <button class="btn btn-secondary btn-sm" onclick="applyPromo()">Apply</button>
+            <button class="btn btn-secondary btn-sm" id="apply-promo-btn">Apply</button>
           </div>
           <a href="checkout.html" class="btn btn-primary" style="display: block; text-align: center; text-decoration: none; margin-bottom: 1rem;">
             Proceed to Checkout
@@ -114,8 +120,41 @@ function initCartPage() {
       </div>
     `);
 
+    // Add Event Listeners for cart actions
+    container.querySelectorAll('.qty-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.currentTarget.dataset.index);
+        const action = e.currentTarget.dataset.action;
+        const item = cart.items[index];
+        if (action === 'decrease') {
+          cart.updateQuantity(index, item.quantity - 1);
+        } else if (action === 'increase') {
+          cart.updateQuantity(index, item.quantity + 1);
+        }
+        renderCart();
+      });
+    });
+
+    container.querySelectorAll('.remove-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const index = parseInt(e.currentTarget.dataset.index);
+        cart.removeItem(index);
+        renderCart();
+      });
+    });
+
+    const promoBtn = document.getElementById('apply-promo-btn');
+    if (promoBtn) {
+      promoBtn.addEventListener('click', () => {
+        const input = document.getElementById('promo-input');
+        if (input && input.value.trim()) {
+          showToast('Promo code applied!');
+        }
+      });
+    }
+
     // Handle manual quantity input changes
-    document.querySelectorAll('.qty-input').forEach(input => {
+    document.querySelectorAll('.qty-input').forEach((input) => {
       input.addEventListener('change', (e) => {
         const index = parseInt(e.target.dataset.index);
         let qty = parseInt(e.target.value);
@@ -126,35 +165,15 @@ function initCartPage() {
     });
   }
 
-  // Global functions for inline handlers
-  window.updateCartItem = (index, qty) => {
-    cart.updateQuantity(index, qty);
-    renderCart();
-  };
-
-  window.removeCartItem = (index) => {
-    cart.removeItem(index);
-    renderCart();
-  };
-
-  window.applyPromo = () => {
-    const input = document.getElementById('promo-input');
-    if (input && input.value.trim()) {
-      showToast('Promo code applied!');
-    }
-  };
-
-  window.checkout = () => {
-    if (!auth.getCurrentUser()) {
-      showToast('Please login to checkout.');
-      window.location.href = 'login.html';
-      return;
-    }
-    showToast('Thank you! Your order has been placed.');
-    cart.clear();
-    setTimeout(() => renderCart(), 1500);
-  };
-
   renderCart();
 }
 
+function runInit() {
+  if (window.PRODUCTS_LOADED) {
+    initCartPage();
+  } else {
+    document.addEventListener('productsLoaded', initCartPage);
+  }
+}
+
+runInit();

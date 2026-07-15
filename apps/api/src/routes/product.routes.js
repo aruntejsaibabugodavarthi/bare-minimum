@@ -17,11 +17,11 @@ router.get('/', async (req, res) => {
       take: limit,
       orderBy: { createdAt: 'desc' }
     });
-    
+
     const total = await prisma.product.count();
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       products,
       pagination: {
         page,
@@ -62,11 +62,11 @@ router.get('/:id/reviews', async (req, res) => {
       take: limit,
       orderBy: { createdAt: 'desc' }
     });
-    
+
     const total = await prisma.review.count({ where: { productId: req.params.id } });
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       reviews,
       pagination: {
         page,
@@ -89,7 +89,7 @@ const reviewSchema = z.object({
 router.post('/:id/reviews', authenticateToken, validate(reviewSchema), async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    
+
     // Check if user has purchased the product
     const orderItems = await prisma.orderItem.findMany({
       where: {
@@ -99,7 +99,9 @@ router.post('/:id/reviews', authenticateToken, validate(reviewSchema), async (re
     });
 
     if (orderItems.length === 0) {
-      return res.status(403).json({ success: false, message: 'You can only review products you have purchased' });
+      return res
+        .status(403)
+        .json({ success: false, message: 'You can only review products you have purchased' });
     }
 
     const review = await prisma.review.create({

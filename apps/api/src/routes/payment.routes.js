@@ -18,28 +18,35 @@ if (config.razorpay.keyId && config.razorpay.keySecret) {
 router.post('/verify-payment', authenticateToken, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    
+
     if (!config.razorpay.keySecret) {
       return res.status(500).json({ success: false, message: 'Payment gateway not configured' });
     }
 
-    const hmac = crypto.createHmac('sha256', config.razorpay.keySecret);
-    hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
-    const generated_signature = hmac.digest('hex');
+    const { validatePaymentVerification } = require('razorpay/dist/utils/razorpay-utils');
+    const isValid = validatePaymentVerification(
+      { order_id: razorpay_order_id, payment_id: razorpay_payment_id },
+      razorpay_signature,
+      config.razorpay.keySecret
+    );
 
-    if (generated_signature === razorpay_signature) {
-      const order = await prisma.order.findFirst({ where: { paymentGatewayOrderId: razorpay_order_id } });
+    if (isValid) {
+      const order = await prisma.order.findFirst({
+        where: { paymentGatewayOrderId: razorpay_order_id }
+      });
       if (order) {
         await prisma.order.update({
           where: { id: order.id },
-          data: { 
+          data: {
             status: 'CONFIRMED',
             paymentId: razorpay_payment_id
           }
         });
         return res.json({ success: true, message: 'Payment verified successfully' });
       } else {
-        return res.status(404).json({ success: false, message: 'Order not found for this payment' });
+        return res
+          .status(404)
+          .json({ success: false, message: 'Order not found for this payment' });
       }
     } else {
       res.status(400).json({ success: false, message: 'Invalid payment signature' });

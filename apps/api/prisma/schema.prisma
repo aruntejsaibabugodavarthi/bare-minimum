@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:../dev.db"
 }
 
 // -----------------------------------------------------------------
@@ -13,14 +13,17 @@ datasource db {
 
 model User {
   id                   String                @id @default(uuid())
-  phone                String?               @unique
+  phone                String?               @unique /// @encrypted
   email                String?               @unique
   name                 String?
-  dateOfBirth          String?
+  dateOfBirth          String?               /// @encrypted
   passwordHash         String?
   googleId             String?               @unique
   role                 String                @default("user")
   isVerified           Boolean               @default(false)
+  twoFactorEnabled     Boolean               @default(false)
+  profilePhoto         String?
+  notificationPrefs    String?               @default("{\"email\":true,\"sms\":true,\"push\":true}")
   createdAt            DateTime              @default(now())
   lastLoginAt          DateTime?
   deletedAt            DateTime? // For DPDP soft deletes
@@ -31,6 +34,12 @@ model User {
   addresses            Address[]
   passwordResetTokens  PasswordResetToken[]
   reviews              Review[]
+  auditLogs            AuditLog[]
+  wishlist             Wishlist?
+  wallet               Wallet?
+  notifications        Notification[]
+  loyalty              LoyaltyAccount?
+  savedPaymentMethods  SavedPaymentMethod[]
 
   @@index([email])
 }
@@ -39,8 +48,8 @@ model Address {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  address1  String
-  address2  String?
+  address1  String   /// @encrypted
+  address2  String?  /// @encrypted
   city      String
   state     String
   pincode   String
@@ -90,6 +99,18 @@ model PasswordResetToken {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model SavedPaymentMethod {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // 'card', 'upi_mandate'
+  token     String   // tokenized reference from gateway
+  last4     String?
+  network   String?  // 'Visa', 'Mastercard'
+  isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -162,6 +183,8 @@ model OrderItem {
   product   Product  @relation(fields: [productId], references: [id])
   quantity  Int
   price     Int
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 // -----------------------------------------------------------------
@@ -191,23 +214,38 @@ model DataDeletionRequest {
 // -----------------------------------------------------------------
 
 model Product {
-  id             String   @id @default(uuid())
-  slug           String   @unique
-  name           String
-  description    String?
-  category       String?
-  price          Int // In paise
-  gstSlab        Int // 5, 12, 18, 28
-  stock          Int      @default(0)
-  images         String   @default("[]") // JSON string of image URLs
-  metadata       String? // JSON string for variants, reviews, etc.
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  orderItems     OrderItem[]
-  reviews        Review[]
+  id                String           @id @default(uuid())
+  slug              String           @unique
+  sku               String?          @unique
+  brand             String?
+  name              String
+  description       String?
+  longDescription   String?
+  category          String?          // legacy
+  categoryId        String?
+  categoryRelation  Category?        @relation(fields: [categoryId], references: [id])
+  collections       Collection[]
+  price             Int // In paise
+  gstSlab           Int // 5, 12, 18, 28
+  hsnSacCode        String?
+  stock             Int              @default(0)
+  lowStockThreshold Int              @default(5)
+  isArchived        Boolean          @default(false)
+  status            String           @default("PUBLISHED") // DRAFT, PUBLISHED
+  seoTitle          String?
+  seoDescription    String?
+  codEligible       Boolean          @default(true)
+  images            String           @default("[]") // JSON string of image URLs
+  metadata          String? // JSON string for variants, reviews, etc.
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  orderItems        OrderItem[]
+  reviews           Review[]
+  variants          ProductVariant[]
+  wishlistItems     WishlistItem[]
 
   @@index([slug])
-  @@index([category])
+  @@index([categoryId])
 }
 
 model Review {
@@ -222,4 +260,150 @@ model Review {
 
   @@index([productId])
   @@index([userId])
+}
+
+model ProductVariant {
+  id        String      @id @default(uuid())
+  productId String
+  product   Product     @relation(fields: [productId], references: [id])
+  sku       String      @unique
+  size      String?
+  color     String?
+  price     Int // in paise
+  stock     Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  orderItems OrderItem[]
+
+  @@index([productId])
+  @@index([sku])
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  bannerImage String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Collection {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  bannerImage String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Wishlist {
+  id        String         @id @default(uuid())
+  userId    String         @unique
+  user      User           @relation(fields: [userId], references: [id])
+  items     WishlistItem[]
+  createdAt DateTime       @default(now())
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+}
+
+model Coupon {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  discountType  String    // 'flat', 'percentage', 'free_shipping'
+  value         Int       // amount in paise or percentage
+  minOrderValue Int?      // in paise
+  usageLimit    Int?
+  usedCount     Int       @default(0)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Settings {
+  key   String @id
+  value String
+}
+
+// -----------------------------------------------------------------
+// 6. WALLET, LOYALTY & NOTIFICATIONS
+// -----------------------------------------------------------------
+
+model Wallet {
+  id           String              @id @default(uuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id])
+  balance      Int                 @default(0) // in paise
+  transactions WalletTransaction[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  amount      Int      // in paise (positive for credit, negative for debit)
+  type        String   // 'refund', 'topup', 'payment'
+  description String?
+  referenceId String?  // e.g. orderId or paymentId
+  createdAt   DateTime @default(now())
+}
+
+model LoyaltyAccount {
+  id           String               @id @default(uuid())
+  userId       String               @unique
+  user         User                 @relation(fields: [userId], references: [id])
+  points       Int                  @default(0)
+  transactions LoyaltyTransaction[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model LoyaltyTransaction {
+  id               String         @id @default(uuid())
+  loyaltyAccountId String
+  loyaltyAccount   LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id])
+  points           Int
+  type             String         // 'earned', 'redeemed'
+  description      String?
+  createdAt        DateTime       @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   // 'order', 'promo', 'system'
+  isRead    Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
 }
